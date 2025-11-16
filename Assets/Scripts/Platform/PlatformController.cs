@@ -30,6 +30,19 @@ namespace DodoRun.Platform
             rigidbody.linearVelocity = new Vector3(0, 0, -platformData.MoveSpeed);
         }
 
+        public void ResetPlatform(Vector3 spawnPos)
+        {
+            isDestroyed = false;
+            hasSpawnedNext = false;
+
+            platformView.transform.position = spawnPos;
+
+            platformView.gameObject.SetActive(true);
+
+            rigidbody = platformView.GetComponent<Rigidbody>();
+            rigidbody.linearVelocity = Vector3.zero;
+        }
+
         public void HandleCollision(Collider collider)
         {
             if (collider.gameObject.CompareTag("Create") && !hasSpawnedNext)
@@ -45,13 +58,13 @@ namespace DodoRun.Platform
                     );
 
                 PlatformController controller = GameService.Instance.PlatformService.CreatePlatform(spawnPos);
-                GameService.Instance.PlatformService.AddPlatform(controller);
             }   
 
             if (collider.gameObject.CompareTag("Destroy"))
             {
                 isDestroyed = true;
-                Object.Destroy(platformView.gameObject);
+                GameService.Instance.PlatformService.ReturnPlatformToPool(this);
+                platformView.gameObject.SetActive(false);
                 return;
             }
         }

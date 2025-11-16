@@ -5,32 +5,30 @@ namespace DodoRun.Platform
 {
     public class PlatformService
     {
-        private List<PlatformController> platforms = new List<PlatformController>();
         private PlatformScriptableObject platformScriptableObject;
+        private PlatformPool platformPool;
 
         public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
         {
             platformScriptableObject = data;
-            AddPlatform(CreatePlatform(spawnPos));
+            platformPool = new PlatformPool(platformScriptableObject);
+            CreatePlatform(spawnPos);
         }
 
         public void UpdatePlatform()
         {
-            for (int i = 0; i < platforms.Count; i++)
-            {
-                platforms[i].UpdatePlatform();
-            }
-        }
-
-        public void AddPlatform(PlatformController controller)
-        {
-            platforms.Add(controller);
+            platformPool.UpatePlatformPool();
         }
 
         public PlatformController CreatePlatform(Vector3 spawnPos)
         {
-            PlatformController controller = new PlatformController(platformScriptableObject, spawnPos);
+            PlatformController controller = platformPool.GetPlatform(spawnPos);
             return controller;
+        }
+
+        public void ReturnPlatformToPool(PlatformController controller)
+        {
+            platformPool.ReturnPlatformToPool(controller);
         }
     }
 }
