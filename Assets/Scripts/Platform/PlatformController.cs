@@ -27,7 +27,8 @@ namespace DodoRun.Platform
         public void UpdatePlatform()
         {
             if (isDestroyed || rigidbody == null) return;
-            rigidbody.linearVelocity = new Vector3(0, 0, -platformData.MoveSpeed);
+            Vector3 movePosition = new Vector3(0, 0, -platformData.MoveSpeed * Time.deltaTime);
+            rigidbody.MovePosition(rigidbody.position + movePosition);
         }
 
         public void ResetPlatform(Vector3 spawnPos)
@@ -40,7 +41,6 @@ namespace DodoRun.Platform
             platformView.gameObject.SetActive(true);
 
             rigidbody = platformView.GetComponent<Rigidbody>();
-            rigidbody.linearVelocity = Vector3.zero;
         }
 
         public void HandleCollision(Collider collider)

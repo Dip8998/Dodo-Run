@@ -8,5 +8,6 @@ namespace DodoRun.Platform
         public PlatformView Platform;
         public float MoveSpeed;
         public float PlatformLength;
+        public Vector3 spawnPosition;
     }
 }

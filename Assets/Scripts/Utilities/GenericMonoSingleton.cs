@@ -2,21 +2,19 @@ using UnityEngine;
 
 namespace DodoRun.Utilities
 {
-	public class GenericMonoSingleton<T> : MonoBehaviour where T : GenericMonoSingleton<T>
-	{
-		private static T instance;
-		public static T Instance { get { return instance; } }
+    public class GenericMonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
+    {
+        public static T Instance { get; private set; }
 
-		protected virtual void Awake()
-		{
-			if (instance == null)
-			{
-				instance = (T)this;
-			}
-			else
-			{
-				Destroy(this);
-			}
-		}
-	}
+        protected virtual void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this as T;
+        }
+    }
 }
