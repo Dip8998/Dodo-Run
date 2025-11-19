@@ -28,5 +28,10 @@ namespace DodoRun.Main
             PlatformService.UpdatePlatform();
             PlayerService.UpdatePlayer();
         }
+
+        private void FixedUpdate()
+        {
+            PlayerService.FixedUpdatePlayer();
+        }
     }
 }

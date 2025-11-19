@@ -8,6 +8,8 @@ namespace DodoRun.Player
     {
         public PlayerView Player;
         public Vector3 SpawnPosition;
+        public float GroundCheckRadius;
+        public LayerMask GroundLayer;
         public float SwipeSpeed;
         public float JumpSpeed;
         public float LaneOffset;

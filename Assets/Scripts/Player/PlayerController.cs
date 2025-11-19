@@ -11,9 +11,17 @@ namespace DodoRun.Player
         private PlayerView playerView;
         private Vector3 firstTouchPosition;
         private Vector3 lastTouchPosition;
-        private float dragDistance;
+        private float laneVelocity;
         private int currentLane = 0;
-        
+        private bool isGrounded;
+        private Rigidbody rigidbody;
+        private bool canAcceptInput = true;
+        private const float minSwipeDistance = 80f;
+        private const float minSwipeSpeed = 300f;
+        private const float directionThreshold = 0.9f;
+        private float touchStartTime;
+        private float lastGroundedTime;
+
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
         {
@@ -25,8 +33,7 @@ namespace DodoRun.Player
         {
             playerView = Object.Instantiate(playerScriptableObject.Player, playerScriptableObject.SpawnPosition, Quaternion.identity);
             playerView.SetController(this);
-            
-            dragDistance = Screen.height * 15 / 100;
+            rigidbody = playerView.GetComponent<Rigidbody>();
 
             GameService.Instance.StartCoroutine(InvokeSpawn());
         }
@@ -43,19 +50,53 @@ namespace DodoRun.Player
             MoveToLane();
         }
 
+        public void FixedUpdatePlayer()
+        {
+            HandleGroundCheck();
+        }
+
+        private void HandleGroundCheck()
+        {
+            isGrounded = Physics.CheckSphere(
+                            playerView.GroundCheckPosition.position,
+                            playerScriptableObject.GroundCheckRadius,
+                            playerScriptableObject.GroundLayer
+                        );
+
+            if (isGrounded)
+            {
+                Debug.Log("Player on Grounded");
+                lastGroundedTime = Time.time;
+            }
+            else
+            {
+                Debug.Log("Player in Air");
+            }
+        }
+
         private void MoveToLane()
         {
             float targetX = currentLane * playerScriptableObject.LaneOffset;
 
-            Vector3 newPosition = playerView.transform.position;
+            Vector3 pos = playerView.transform.position;
 
-            newPosition.x = Mathf.Lerp(playerView.transform.position.x, targetX, Time.deltaTime * playerScriptableObject.SwipeSpeed);
+            if (isGrounded)
+            {
+                pos.x = Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f);
+            }
+            else
+            {
+                pos.x = Mathf.MoveTowards(pos.x, targetX, 8f * Time.deltaTime);
+            }
 
-            playerView.transform.position = newPosition;
+            playerView.transform.position = pos;
         }
+
 
         private void HandleSwipeInputs()
         {
+            if (!canAcceptInput) return;
+
             if (Input.touchCount != 1)
                 return;
 
@@ -64,6 +105,7 @@ namespace DodoRun.Player
             switch (touch.phase)
             {
                 case TouchPhase.Began:
+                    touchStartTime = Time.time;
                     firstTouchPosition = touch.position;
                     lastTouchPosition = touch.position;
                     break;
@@ -79,40 +121,51 @@ namespace DodoRun.Player
 
         private void DetectSwipeInputs()
         {
-            Vector2 differnce = lastTouchPosition - firstTouchPosition;
+            Vector2 diff = lastTouchPosition - firstTouchPosition;
+            float distance = diff.magnitude;
 
-            bool isSwipe = Mathf.Abs(differnce.x) > dragDistance || Mathf.Abs(differnce.y) > dragDistance;
+            if (distance < minSwipeDistance)
+                return;
 
-            if(isSwipe)
+            float time = Time.time - touchStartTime;
+
+            if (time <= 0.01f)
+                return;
+
+            float speed = distance / time;
+
+            if (speed < minSwipeSpeed)
+                return;
+
+            Vector2 direction = diff.normalized;
+
+            if (Vector2.Dot(direction, Vector2.right) > directionThreshold)
+                MoveRight();
+            else if (Vector2.Dot(direction, Vector2.left) > directionThreshold)
+                MoveLeft();
+            else if (Vector2.Dot(direction, Vector2.up) > directionThreshold)
             {
-                if (Mathf.Abs(differnce.x) > Mathf.Abs(differnce.y))
-                {
-                    if (lastTouchPosition.x > firstTouchPosition.x)
-                    {
-                        MoveRight();
-                    }
-                    else
-                    {
-                        MoveLeft();
-                    }
-                }
+                if (IsGroundedSafe()) MoveUp();
                 else
-                {
-                    if (lastTouchPosition.y > firstTouchPosition.y)
-                    {
-                        MoveUp();
-                    }
-                    else
-                    {
-                        MoveDown();
-                    }
-                }
+                    return;
             }
+            else if (Vector2.Dot(direction, Vector2.down) > directionThreshold)
+                MoveDown();
+
+            canAcceptInput = false;
+            GameService.Instance.StartCoroutine(InputCooldown(0.1f));
+        }
+
+
+        private IEnumerator InputCooldown(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            canAcceptInput = true;
         }
 
         private void MoveRight()
         {
-            if(currentLane < 1)
+            if (currentLane < 1)
             {
                 currentLane++;
             }
@@ -121,17 +174,28 @@ namespace DodoRun.Player
         private void MoveLeft()
         {
             if (currentLane > -1)
-                currentLane--;  
+                currentLane--;
         }
 
         private void MoveUp()
         {
+            if (!isGrounded) return;
 
+            rigidbody.linearVelocity = new Vector3(
+                rigidbody.linearVelocity.x,
+                playerScriptableObject.JumpSpeed,
+                rigidbody.linearVelocity.z
+            );
         }
 
         private void MoveDown()
         {
-            
+
+        }
+
+        bool IsGroundedSafe()
+        {
+            return Time.time - lastGroundedTime < 0.05f;
         }
     }
 }

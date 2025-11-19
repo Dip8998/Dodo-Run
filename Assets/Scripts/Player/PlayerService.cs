@@ -13,5 +13,10 @@
         {
             playerController.UpdatePlayer();
         }
+
+        public void FixedUpdatePlayer()
+        {
+            playerController.FixedUpdatePlayer();
+        }
     }
 }

@@ -14,6 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Player: {fileID: 4465064410697678996, guid: ee2246a083b374c45ae2b6277ea140d4, type: 3}
   SpawnPosition: {x: 0, y: 0.25, z: -10}
+  GroundCheckRadius: 0.08
+  GroundLayer:
+    serializedVersion: 2
+    m_Bits: 64
   SwipeSpeed: 10
   JumpSpeed: 5
   LaneOffset: 2

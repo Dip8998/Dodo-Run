@@ -1,27 +1,42 @@
 ﻿using UnityEngine;
-using Unity.Cinemachine;
 using DodoRun.Main;
 
 namespace DodoRun.Camera
 {
     public class CameraController : MonoBehaviour
     {
-        private CinemachineCamera playerCamera;
+        [SerializeField] private Transform player;
+        [SerializeField] private Vector3 playerOffset;
+        [SerializeField] private float followSmoothness;
+        [SerializeField] private float roatationSmoothness;
+
+        private Transform currentTarget;
+        private Vector3 velocity = Vector3.zero;
+
 
         private void Awake()
         {
-            playerCamera = GetComponent<CinemachineCamera>();
             GameService.Instance.EventService.OnPlayerSpawned.AddListner(BindToPlayer);
         }
 
         private void OnDestroy() => GameService.Instance?.EventService?.OnPlayerSpawned?.RemoveListner(BindToPlayer);
 
+        private void LateUpdate()
+        {
+            if(currentTarget == null) return;
+
+            Vector3 desiredPos = currentTarget.position + playerOffset;
+
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref velocity, followSmoothness);
+
+            Quaternion desiredRot = Quaternion.LookRotation(currentTarget.forward);
+
+            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, roatationSmoothness * Time.deltaTime);
+        }
+
         private void BindToPlayer(Transform player)
         {
-            var target = playerCamera.Target;
-            target.TrackingTarget = player;
-            target.LookAtTarget = player;
-            playerCamera.Target = target;
+            currentTarget = player;
         }
     }
 }
