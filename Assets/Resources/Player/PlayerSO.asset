@@ -18,6 +18,6 @@ MonoBehaviour:
   GroundLayer:
     serializedVersion: 2
     m_Bits: 64
-  SwipeSpeed: 10
-  JumpSpeed: 4
+  SwipeSpeed: 20
+  JumpSpeed: 5
   LaneOffset: 2

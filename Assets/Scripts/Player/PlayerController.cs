@@ -22,6 +22,11 @@ namespace DodoRun.Player
         private float touchStartTime;
         private float lastGroundedTime;
         private Animator playerAnimator;
+        private bool isSliding = false;
+        private float slideDuration = 0.9f; 
+        private CapsuleCollider capsuleCollider;
+        private float originalHeight;
+        private float originalCenterY;
 
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
@@ -35,6 +40,9 @@ namespace DodoRun.Player
             playerView = Object.Instantiate(playerScriptableObject.Player, playerScriptableObject.SpawnPosition, Quaternion.identity);
             playerView.SetController(this);
             rigidbody = playerView.GetComponent<Rigidbody>();
+            capsuleCollider = playerView.GetComponent<CapsuleCollider>();
+            originalHeight = capsuleCollider.height;
+            originalCenterY = capsuleCollider.center.y;
             playerAnimator = playerView.GetComponent<Animator>();
 
             GameService.Instance.StartCoroutine(InvokeSpawn());
@@ -59,6 +67,9 @@ namespace DodoRun.Player
 
         private void HandleGroundCheck()
         {
+            if (isSliding)
+                return;
+
             isGrounded = Physics.CheckSphere(
                 playerView.GroundCheckPosition.position,
                 playerScriptableObject.GroundCheckRadius,
@@ -183,7 +194,7 @@ namespace DodoRun.Player
 
         private void MoveUp()
         {
-            if (!isGrounded) return;
+            if (!isGrounded || isSliding) return;
 
             rigidbody.linearVelocity = new Vector3(
                 rigidbody.linearVelocity.x,
@@ -196,8 +207,45 @@ namespace DodoRun.Player
 
         private void MoveDown()
         {
+            if (!isGrounded) return;        
+            if (isSliding) return;       
 
+            GameService.Instance.StartCoroutine(SlideRoutine());
         }
+
+        private IEnumerator SlideRoutine()
+        {
+            if (isSliding) yield break;
+            isSliding = true;
+            canAcceptInput = false;
+
+            playerAnimator.SetTrigger("Slide");
+
+            capsuleCollider.height = originalHeight * 0.5f;
+            capsuleCollider.center = new Vector3(
+                capsuleCollider.center.x,
+                 0.5f,
+                capsuleCollider.center.z
+            );
+
+            yield return new WaitForSeconds(.75f);
+
+            capsuleCollider.height = originalHeight;
+            capsuleCollider.center = new Vector3(
+                capsuleCollider.center.x,
+                originalCenterY,
+                capsuleCollider.center.z
+            );
+
+            isGrounded = true;
+            lastGroundedTime = Time.time;
+            playerAnimator.SetBool("IsGrounded", true);
+
+            isSliding = false;
+            canAcceptInput = true;
+        }
+
+
 
         bool IsGroundedSafe()
         {
