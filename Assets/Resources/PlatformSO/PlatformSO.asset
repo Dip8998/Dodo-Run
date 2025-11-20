@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: PlatformSO
   m_EditorClassIdentifier: 
   Platform: {fileID: -3417798397589257612, guid: 6ffe787878516504f9919fd83899c81e, type: 3}
-  MoveSpeed: 30
-  PlatformLength: 99
+  MoveSpeed: 231.9
+  PlatformLength: 50
   spawnPosition: {x: 0, y: 0, z: -2}

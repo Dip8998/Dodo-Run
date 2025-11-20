@@ -19,5 +19,5 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   SwipeSpeed: 10
-  JumpSpeed: 5
+  JumpSpeed: 4
   LaneOffset: 2

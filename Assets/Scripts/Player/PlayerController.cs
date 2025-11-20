@@ -21,6 +21,7 @@ namespace DodoRun.Player
         private const float directionThreshold = 0.9f;
         private float touchStartTime;
         private float lastGroundedTime;
+        private Animator playerAnimator;
 
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
@@ -34,6 +35,7 @@ namespace DodoRun.Player
             playerView = Object.Instantiate(playerScriptableObject.Player, playerScriptableObject.SpawnPosition, Quaternion.identity);
             playerView.SetController(this);
             rigidbody = playerView.GetComponent<Rigidbody>();
+            playerAnimator = playerView.GetComponent<Animator>();
 
             GameService.Instance.StartCoroutine(InvokeSpawn());
         }
@@ -58,19 +60,21 @@ namespace DodoRun.Player
         private void HandleGroundCheck()
         {
             isGrounded = Physics.CheckSphere(
-                            playerView.GroundCheckPosition.position,
-                            playerScriptableObject.GroundCheckRadius,
-                            playerScriptableObject.GroundLayer
-                        );
+                playerView.GroundCheckPosition.position,
+                playerScriptableObject.GroundCheckRadius,
+                playerScriptableObject.GroundLayer
+            );
 
             if (isGrounded)
             {
                 Debug.Log("Player on Grounded");
                 lastGroundedTime = Time.time;
+                playerAnimator.SetBool("IsGrounded", true);
             }
             else
             {
                 Debug.Log("Player in Air");
+                playerAnimator.SetBool("IsGrounded", false);
             }
         }
 
@@ -186,6 +190,8 @@ namespace DodoRun.Player
                 playerScriptableObject.JumpSpeed,
                 rigidbody.linearVelocity.z
             );
+
+            playerAnimator.SetTrigger("Jump");
         }
 
         private void MoveDown()

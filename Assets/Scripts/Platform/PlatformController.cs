@@ -1,5 +1,6 @@
 ﻿using DodoRun.Main;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DodoRun.Platform
 {
@@ -27,8 +28,7 @@ namespace DodoRun.Platform
         public void UpdatePlatform()
         {
             if (isDestroyed || rigidbody == null) return;
-            Vector3 movePosition = new Vector3(0, 0, -platformData.MoveSpeed * Time.deltaTime);
-            rigidbody.MovePosition(rigidbody.position + movePosition);
+            platformView.transform.position += new Vector3(0, 0, -platformData.MoveSpeed * Time.deltaTime);
         }
 
         public void ResetPlatform(Vector3 spawnPos)
@@ -36,11 +36,14 @@ namespace DodoRun.Platform
             isDestroyed = false;
             hasSpawnedNext = false;
 
+            Collider col = platformView.GetComponent<Collider>();
+            col.enabled = false;
+
             platformView.transform.position = spawnPos;
 
             platformView.gameObject.SetActive(true);
 
-            rigidbody = platformView.GetComponent<Rigidbody>();
+            col.enabled = true;
         }
 
         public void HandleCollision(Collider collider)
@@ -54,7 +57,7 @@ namespace DodoRun.Platform
                 Vector3 spawnPos = new Vector3(
                     platformView.transform.position.x,
                     platformView.transform.position.y,
-                    platformView.transform.position.z + length
+                    platformView.transform.position.z + length - 0.2f
                     );
 
                 PlatformController controller = GameService.Instance.PlatformService.CreatePlatform(spawnPos);
