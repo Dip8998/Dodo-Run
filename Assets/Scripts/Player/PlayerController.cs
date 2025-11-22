@@ -1,49 +1,55 @@
 ﻿using DodoRun.Main;
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace DodoRun.Player
 {
     public class PlayerController
     {
-        private PlayerScriptableObject playerScriptableObject;
+        public PlayerScriptableObject PlayerScriptableObject { get; private set; }
+        public Rigidbody Rigidbody { get; private set; }
+        public CapsuleCollider CapsuleCollider { get; private set; }
+        public Animator PlayerAnimator { get; private set; }
+
+        public int CurrentLane { get; set; } = 0;
+        public bool IsGrounded { get; private set; }
+        public bool IsSliding { get; set; } = false; 
+        public bool CanAcceptInput { get; set; } = true; 
+
+        public float OriginalHeight { get; private set; }
+        public float OriginalCenterY { get; private set; }
+        public float SlideDuration { get; private set; } = 0.75f; 
+
+        private PlayerStateMachine playerStateMachine;
         private PlayerView playerView;
+
         private Vector3 firstTouchPosition;
         private Vector3 lastTouchPosition;
+        private float touchStartTime;
+        private float lastGroundedTime;
         private float laneVelocity;
-        private int currentLane = 0;
-        private bool isGrounded;
-        private Rigidbody rigidbody;
-        private bool canAcceptInput = true;
+
         private const float minSwipeDistance = 80f;
         private const float minSwipeSpeed = 300f;
         private const float directionThreshold = 0.9f;
-        private float touchStartTime;
-        private float lastGroundedTime;
-        private Animator playerAnimator;
-        private bool isSliding = false;
-        private float slideDuration = 0.9f; 
-        private CapsuleCollider capsuleCollider;
-        private float originalHeight;
-        private float originalCenterY;
-
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
         {
-            this.playerScriptableObject = playerScriptableObject;
+            this.PlayerScriptableObject = playerScriptableObject;
             SetupView();
+            playerStateMachine = new PlayerStateMachine(this);
         }
 
         private void SetupView()
         {
-            playerView = Object.Instantiate(playerScriptableObject.Player, playerScriptableObject.SpawnPosition, Quaternion.identity);
+            playerView = Object.Instantiate(PlayerScriptableObject.Player, PlayerScriptableObject.SpawnPosition, Quaternion.identity);
             playerView.SetController(this);
-            rigidbody = playerView.GetComponent<Rigidbody>();
-            capsuleCollider = playerView.GetComponent<CapsuleCollider>();
-            originalHeight = capsuleCollider.height;
-            originalCenterY = capsuleCollider.center.y;
-            playerAnimator = playerView.GetComponent<Animator>();
+            Rigidbody = playerView.GetComponent<Rigidbody>();
+            CapsuleCollider = playerView.GetComponent<CapsuleCollider>();
+            PlayerAnimator = playerView.GetComponent<Animator>();
+
+            OriginalHeight = CapsuleCollider.height;
+            OriginalCenterY = CapsuleCollider.center.y;
 
             GameService.Instance.StartCoroutine(InvokeSpawn());
         }
@@ -57,63 +63,50 @@ namespace DodoRun.Player
         public void UpdatePlayer()
         {
             HandleSwipeInputs();
-            MoveToLane();
+            playerStateMachine.Update();
         }
 
-        public void FixedUpdatePlayer()
+        public void FixedUpdatePlayer() => HandleGroundCheck();
+
+        public void MoveToLane()
         {
-            HandleGroundCheck();
-        }
-
-        private void HandleGroundCheck()
-        {
-            if (isSliding)
-                return;
-
-            isGrounded = Physics.CheckSphere(
-                playerView.GroundCheckPosition.position,
-                playerScriptableObject.GroundCheckRadius,
-                playerScriptableObject.GroundLayer
-            );
-
-            if (isGrounded)
-            {
-                Debug.Log("Player on Grounded");
-                lastGroundedTime = Time.time;
-                playerAnimator.SetBool("IsGrounded", true);
-            }
-            else
-            {
-                Debug.Log("Player in Air");
-                playerAnimator.SetBool("IsGrounded", false);
-            }
-        }
-
-        private void MoveToLane()
-        {
-            float targetX = currentLane * playerScriptableObject.LaneOffset;
-
+            float targetX = CurrentLane * PlayerScriptableObject.LaneOffset;
             Vector3 pos = playerView.transform.position;
 
-            if (isGrounded)
-            {
+            if (IsGrounded)
                 pos.x = Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f);
-            }
             else
-            {
                 pos.x = Mathf.MoveTowards(pos.x, targetX, 8f * Time.deltaTime);
-            }
 
             playerView.transform.position = pos;
         }
 
+        private void HandleGroundCheck()
+        {
+            if (IsSliding) return;
+
+            IsGrounded = Physics.CheckSphere(
+                playerView.GroundCheckPosition.position,
+                PlayerScriptableObject.GroundCheckRadius,
+                PlayerScriptableObject.GroundLayer
+            );
+
+            if (IsGrounded)
+            {
+                lastGroundedTime = Time.time;
+                PlayerAnimator.SetBool("IsGrounded", true);
+            }
+            else
+            {
+                PlayerAnimator.SetBool("IsGrounded", false);
+            }
+        }
 
         private void HandleSwipeInputs()
         {
-            if (!canAcceptInput) return;
+            if (!CanAcceptInput) return;
 
-            if (Input.touchCount != 1)
-                return;
+            if (Input.touchCount != 1) return;
 
             Touch touch = Input.GetTouch(0);
 
@@ -139,117 +132,31 @@ namespace DodoRun.Player
             Vector2 diff = lastTouchPosition - firstTouchPosition;
             float distance = diff.magnitude;
 
-            if (distance < minSwipeDistance)
-                return;
+            if (distance < minSwipeDistance) return;
 
             float time = Time.time - touchStartTime;
 
-            if (time <= 0.01f)
-                return;
+            if (time <= 0.01f) return;
 
             float speed = distance / time;
 
-            if (speed < minSwipeSpeed)
-                return;
+            if (speed < minSwipeSpeed) return;
 
             Vector2 direction = diff.normalized;
 
             if (Vector2.Dot(direction, Vector2.right) > directionThreshold)
-                MoveRight();
+                playerStateMachine.ChangeState(PlayerState.RIGHT_SWIPE);
             else if (Vector2.Dot(direction, Vector2.left) > directionThreshold)
-                MoveLeft();
+                playerStateMachine.ChangeState(PlayerState.LEFT_SWIPE);
             else if (Vector2.Dot(direction, Vector2.up) > directionThreshold)
             {
-                if (IsGroundedSafe()) MoveUp();
-                else
-                    return;
+                if (IsGroundedSafe()) playerStateMachine.ChangeState(PlayerState.JUMP);
+                else return;
             }
             else if (Vector2.Dot(direction, Vector2.down) > directionThreshold)
-                MoveDown();
-
-            canAcceptInput = false;
-            GameService.Instance.StartCoroutine(InputCooldown(0.1f));
+                playerStateMachine.ChangeState(PlayerState.ROLLING);
         }
 
-
-        private IEnumerator InputCooldown(float duration)
-        {
-            yield return new WaitForSeconds(duration);
-            canAcceptInput = true;
-        }
-
-        private void MoveRight()
-        {
-            if (currentLane < 1)
-            {
-                currentLane++;
-            }
-        }
-
-        private void MoveLeft()
-        {
-            if (currentLane > -1)
-                currentLane--;
-        }
-
-        private void MoveUp()
-        {
-            if (!isGrounded || isSliding) return;
-
-            rigidbody.linearVelocity = new Vector3(
-                rigidbody.linearVelocity.x,
-                playerScriptableObject.JumpSpeed,
-                rigidbody.linearVelocity.z
-            );
-
-            playerAnimator.SetTrigger("Jump");
-        }
-
-        private void MoveDown()
-        {
-            if (!isGrounded) return;        
-            if (isSliding) return;       
-
-            GameService.Instance.StartCoroutine(SlideRoutine());
-        }
-
-        private IEnumerator SlideRoutine()
-        {
-            if (isSliding) yield break;
-            isSliding = true;
-            canAcceptInput = false;
-
-            playerAnimator.SetTrigger("Slide");
-
-            capsuleCollider.height = originalHeight * 0.5f;
-            capsuleCollider.center = new Vector3(
-                capsuleCollider.center.x,
-                 0.5f,
-                capsuleCollider.center.z
-            );
-
-            yield return new WaitForSeconds(.75f);
-
-            capsuleCollider.height = originalHeight;
-            capsuleCollider.center = new Vector3(
-                capsuleCollider.center.x,
-                originalCenterY,
-                capsuleCollider.center.z
-            );
-
-            isGrounded = true;
-            lastGroundedTime = Time.time;
-            playerAnimator.SetBool("IsGrounded", true);
-
-            isSliding = false;
-            canAcceptInput = true;
-        }
-
-
-
-        bool IsGroundedSafe()
-        {
-            return Time.time - lastGroundedTime < 0.05f;
-        }
+        bool IsGroundedSafe() => Time.time - lastGroundedTime < 0.05f;
     }
 }
