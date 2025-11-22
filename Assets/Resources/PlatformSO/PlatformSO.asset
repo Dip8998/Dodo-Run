@@ -16,3 +16,4 @@ MonoBehaviour:
   MoveSpeed: 10
   PlatformLength: 75
   spawnPosition: {x: 0, y: 0, z: -2}
+  LaneOffset: 2

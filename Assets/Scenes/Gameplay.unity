@@ -318,6 +318,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   platformScriptableObject: {fileID: 11400000, guid: 79dd5f8b199391145b00d6cecc11eb9c, type: 2}
   playerScriptableObject: {fileID: 11400000, guid: 49d94bfb22d568f4e98f3e97e8f60075, type: 2}
+  obstacleScriptableObject: {fileID: 11400000, guid: 49899f6025493e24cb369b62252dde2e, type: 2}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0

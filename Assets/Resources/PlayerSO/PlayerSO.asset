@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9813dcfe60467c4dae59803635eba90, type: 3}
+  m_Name: PlayerSO
+  m_EditorClassIdentifier: 
+  Player: {fileID: 4465064410697678996, guid: ee2246a083b374c45ae2b6277ea140d4, type: 3}
+  SpawnPosition: {x: 0, y: 0.25, z: -10}
+  GroundCheckRadius: 0.08
+  GroundLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  SwipeSpeed: 30
+  JumpSpeed: 5
+  LaneOffset: 2
