@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16ceed2d8919c0f4196cba8758d0f0b1, type: 3}
+  m_Name: Jump_Roll_Jump
+  m_EditorClassIdentifier: 
+  ObstaclePositions:
+  - Lane: 0
+    ObstaclePrefab: {fileID: -8570173174595304936, guid: 4123c4341a5bfb745ae731f9c277f767, type: 3}
+    ZOffset: -10
+  - Lane: 0
+    ObstaclePrefab: {fileID: -8570173174595304936, guid: 4123c4341a5bfb745ae731f9c277f767, type: 3}
+    ZOffset: 0
+  - Lane: 0
+    ObstaclePrefab: {fileID: 7976156104135109727, guid: a9e14d11588cb5545a7c284a8f936af0, type: 3}
+    ZOffset: 10
+  DifficultyRating: 3

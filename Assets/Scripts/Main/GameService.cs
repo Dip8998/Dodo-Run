@@ -21,6 +21,8 @@ namespace DodoRun.Main
         protected override void Awake()
         {
             base.Awake();
+            Application.targetFrameRate = 60;
+            QualitySettings.vSyncCount = 0;
             EventService = new EventService();
             PlayerService = new PlayerService(playerScriptableObject);
             ObstacleService = new ObstacleService(obstacleScriptableObject);

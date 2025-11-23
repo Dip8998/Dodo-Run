@@ -13,7 +13,10 @@ namespace DodoRun.Platform
 
         private void OnTriggerEnter(Collider other)
         {
-			platformController.HandleCollision(other);
+            if (platformController != null)
+            {
+                platformController.HandleCollision(other);
+            }
         }
     }
 }

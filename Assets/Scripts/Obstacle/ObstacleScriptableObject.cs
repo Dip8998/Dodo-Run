@@ -6,7 +6,7 @@ namespace DodoRun.Obstacle
 
     public class ObstacleScriptableObject : ScriptableObject
     {
-        public ObstacleView[] Obstacles;
+        public ObstaclePatternScriptableObject[] Patterns;
         public float ObstacleSegmentLength;
         public float SpawnProbability;
     }

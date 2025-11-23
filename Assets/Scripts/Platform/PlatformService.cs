@@ -5,13 +5,13 @@ namespace DodoRun.Platform
 {
     public class PlatformService
     {
-        private PlatformScriptableObject platformScriptableObject;
+        public PlatformScriptableObject PlatformScriptableObject { get; private set; }
         private PlatformPool platformPool;
 
         public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
         {
-            platformScriptableObject = data;
-            platformPool = new PlatformPool(platformScriptableObject);
+            PlatformScriptableObject = data;
+            platformPool = new PlatformPool(PlatformScriptableObject);
             CreatePlatform(spawnPos);
         }
 

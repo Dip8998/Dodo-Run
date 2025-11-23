@@ -13,12 +13,12 @@ namespace DodoRun.Player
 
         public int CurrentLane { get; set; } = 0;
         public bool IsGrounded { get; private set; }
-        public bool IsSliding { get; set; } = false; 
-        public bool CanAcceptInput { get; set; } = true; 
+        public bool IsSliding { get; set; } = false;
+        public bool CanAcceptInput { get; set; } = true;
 
         public float OriginalHeight { get; private set; }
         public float OriginalCenterY { get; private set; }
-        public float SlideDuration { get; private set; } = 0.75f; 
+        public float SlideDuration { get; private set; } = 0.75f;
 
         private PlayerStateMachine playerStateMachine;
         private PlayerView playerView;
@@ -27,11 +27,12 @@ namespace DodoRun.Player
         private Vector3 lastTouchPosition;
         private float touchStartTime;
         private float lastGroundedTime;
-        private float laneVelocity;
+        private float laneVelocity; 
 
         private const float minSwipeDistance = 80f;
         private const float minSwipeSpeed = 300f;
         private const float directionThreshold = 0.9f;
+        private const float AirborneLaneMoveSpeed = 16f; 
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
         {
@@ -74,9 +75,13 @@ namespace DodoRun.Player
             Vector3 pos = playerView.transform.position;
 
             if (IsGrounded)
+            {
                 pos.x = Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f);
+            }
             else
-                pos.x = Mathf.MoveTowards(pos.x, targetX, 8f * Time.deltaTime);
+            {
+                pos.x = Mathf.MoveTowards(pos.x, targetX, AirborneLaneMoveSpeed * Time.deltaTime);
+            }
 
             playerView.transform.position = pos;
         }

@@ -14,7 +14,6 @@ namespace DodoRun.Platform
         private bool hasSpawnedNext = false;
         private bool isDestroyed = false;
         private List<ObstacleController> spawnedObstacles = new List<ObstacleController>();
-        private ObstacleScriptableObject obstacleScriptableObject => GameService.Instance.ObstacleService.ObstacleScriptableObject;
 
         public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos)
         {
@@ -38,39 +37,40 @@ namespace DodoRun.Platform
 
         private void SpawnObstacle()
         {
+            ObstacleScriptableObject obstacleScriptableObject =
+                GameService.Instance.ObstacleService.ObstacleScriptableObject;
+
             float platformLength = platformData.PlatformLength;
-            int numberOfSegments = Mathf.FloorToInt(platformLength / obstacleScriptableObject.ObstacleSegmentLength);
+            float segmentLength = obstacleScriptableObject.ObstacleSegmentLength;
+            float spawnProbability = obstacleScriptableObject.SpawnProbability;
+            float laneOffset = platformData.LaneOffset;
+
+            int numberOfSegments = Mathf.FloorToInt(platformLength / segmentLength);
 
             for (int i = 0; i < numberOfSegments; i++)
             {
-                float segmentZ = platformView.transform.position.z
-                                 + (i * obstacleScriptableObject.ObstacleSegmentLength)
-                                 + (obstacleScriptableObject.ObstacleSegmentLength / 2f);
-
-                for (int j = -1; j <= 1; j++)
+                if (Random.value < spawnProbability)
                 {
-                    if (Random.value < obstacleScriptableObject.SpawnProbability)
-                    {
-                        PlatformLane selectedLane = (PlatformLane)j;
+                    float segmentZ = platformView.transform.position.z
+                                         + (i * segmentLength)
+                                         + (segmentLength / 2f);
 
-                        float laneX = (int)selectedLane * platformData.LaneOffset;
-                        float obstacleYOffeset = 0.25f;
+                    Vector3 segmentSpawnBase = new Vector3(
+                        platformView.transform.position.x,
+                        platformView.transform.position.y,
+                        segmentZ
+                    );
 
-                        Vector3 spawnPosition = new Vector3(
-                            platformView.transform.position.x + laneX,
-                            platformView.transform.position.y + obstacleYOffeset,
-                            segmentZ
-                        );
-
-                        ObstacleController obstacle = GameService.Instance.ObstacleService.SpawnRandomObstacle(
-                            spawnPosition,
+                    List<ObstacleController> patternControllers =
+                        GameService.Instance.ObstacleService.SpawnRandomPattern(
+                            segmentSpawnBase,
+                            laneOffset,
                             platformView.transform
                         );
 
-                        if (obstacle != null)
-                        {
-                            spawnedObstacles.Add(obstacle);
-                        }
+                    if (patternControllers != null)
+                    {
+                        spawnedObstacles.AddRange(patternControllers);
                     }
                 }
             }

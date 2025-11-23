@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using DodoRun.Main;
+using DodoRun.Platform;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace DodoRun.Obstacle
 {
@@ -13,17 +16,31 @@ namespace DodoRun.Obstacle
             obstaclePool = new ObstaclePool(data);
         }
 
-        public ObstacleController SpawnRandomObstacle(Vector3 spawnPos, Transform parent)
+        public List<ObstacleController> SpawnRandomPattern(Vector3 segmentStartPos, float laneOffset, Transform parent)
         {
-            if (ObstacleScriptableObject.Obstacles.Length == 0) return null;
+            if (ObstacleScriptableObject.Patterns.Length == 0) return null;
 
-            int randomIndex = Random.Range(0, ObstacleScriptableObject.Obstacles.Length);
-            ObstacleView selectedPrefab = ObstacleScriptableObject.Obstacles[randomIndex];
+            int patternIndex = Random.Range(0, ObstacleScriptableObject.Patterns.Length);
+            ObstaclePatternScriptableObject selectedPattern = ObstacleScriptableObject.Patterns[patternIndex];
 
-            ObstacleController controller = obstaclePool.GetObstacle(selectedPrefab, spawnPos, parent);
-            return controller;
+            List<ObstacleController> spawned = new List<ObstacleController>();
+
+            foreach (var patternObstacle in selectedPattern.ObstaclePositions)
+            {
+                float laneX = (int)patternObstacle.Lane * laneOffset;
+                float obstacleYOffeset = 0.25f; 
+
+                Vector3 spawnPosition = new Vector3(
+                    segmentStartPos.x + laneX,
+                    segmentStartPos.y + obstacleYOffeset,
+                    segmentStartPos.z + patternObstacle.ZOffset 
+                );
+
+                ObstacleController controller = obstaclePool.GetObstacle(patternObstacle.ObstaclePrefab, spawnPosition, parent);
+                spawned.Add(controller);
+            }
+            return spawned; 
         }
-
         public void ReturnObstacleToPool(ObstacleController controller)
         {
             obstaclePool.ReturnObstacleToPool(controller);

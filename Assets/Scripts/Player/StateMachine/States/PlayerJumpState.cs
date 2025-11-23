@@ -17,8 +17,7 @@ namespace DodoRun.Player
                 Rigidbody rb = Owner.Rigidbody;
                 float jumpSpeed = Owner.PlayerScriptableObject.JumpSpeed;
 
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpSpeed, rb.linearVelocity.y);
-
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpSpeed, rb.linearVelocity.z);
                 Owner.PlayerAnimator.SetTrigger("Jump");
             }
 
