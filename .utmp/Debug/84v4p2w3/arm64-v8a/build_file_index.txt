@@ -1,0 +1,2 @@
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt

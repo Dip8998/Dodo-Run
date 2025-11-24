@@ -1,0 +1,17 @@
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\GAToUnityCallbacks.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\MacroEnd.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\MacroHeaderBegin.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\MacroSourceBegin.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAApplication.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAConfiguration.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGADebug.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAEvents.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAInput.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGASoftKeyboard.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGASoftKeyboardCallbacks.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGATypes.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UGAVersion.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGACallbacks.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGAConfigurationCallbacks.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGAKeyEventCallbacks.h
+D:\SourceTree (Outscal)\OutscalGames(Unity)\Dodo Run\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\UnityToGAMotionEventCallbacks.h

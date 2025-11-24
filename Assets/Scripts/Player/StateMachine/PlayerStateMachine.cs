@@ -7,7 +7,7 @@ namespace DodoRun.Player
     public class PlayerStateMachine
     {
         private PlayerController Owner;
-        private IPlayerState currentState;
+        public IPlayerState CurrentState { get; private set; }
         protected Dictionary<PlayerState, IPlayerState> States = new();
 
         public PlayerStateMachine(PlayerController owner)
@@ -34,15 +34,16 @@ namespace DodoRun.Player
             States.Add(PlayerState.RIGHT_SWIPE, new PlayerRightSwipeState(this));
             States.Add(PlayerState.JUMP, new PlayerJumpState(this));
             States.Add(PlayerState.ROLLING, new PlayerRollingState(this));
+            States.Add(PlayerState.DEAD, new PlayerDeadState(this));
         }
 
-        public void Update() => currentState?.Update();
+        public void Update() => CurrentState?.Update();
 
         protected void ChangeState(IPlayerState newState)
         {
-            currentState?.OnStateExit();
-            currentState = newState;
-            currentState?.OnStateEnter();
+            CurrentState?.OnStateExit();
+            CurrentState = newState;
+            CurrentState?.OnStateEnter();
         }
 
         public void ChangeState(PlayerState state) => ChangeState(States[state]); 

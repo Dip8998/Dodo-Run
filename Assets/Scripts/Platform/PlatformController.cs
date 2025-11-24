@@ -2,41 +2,62 @@
 using DodoRun.Obstacle;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace DodoRun.Platform
 {
     public class PlatformController
     {
         private PlatformScriptableObject platformData;
-        public PlatformView platformView {get; private set;}
+        public PlatformView PlatformView { get; private set; }
         private Rigidbody rigidbody;
         private bool hasSpawnedNext = false;
         private bool isDestroyed = false;
+        private int platformIndex; 
         private List<ObstacleController> spawnedObstacles = new List<ObstacleController>();
 
-        public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos)
+        public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos, int index)
         {
             platformData = platformScriptableObject;
+            platformIndex = index; 
             SetupView(spawnPos);
         }
 
         private void SetupView(Vector3 spawnPos)
         {
-            platformView = Object.Instantiate(platformData.Platform, spawnPos, Quaternion.identity);
-            rigidbody = platformView.GetComponent<Rigidbody>();
-            platformView.SetController(this);
-            SpawnObstacle();
+            PlatformView = Object.Instantiate(platformData.Platform, spawnPos, Quaternion.identity);
+            rigidbody = PlatformView.GetComponent<Rigidbody>();
+            PlatformView.SetController(this);
+            SpawnObstacle(platformIndex);
         }
 
         public void UpdatePlatform()
         {
             if (isDestroyed || rigidbody == null) return;
-            platformView.transform.position += new Vector3(0, 0, -platformData.MoveSpeed * Time.deltaTime);
+
+            if (!GameService.Instance.IsGameRunning)
+            {
+                return;
+            }
+
+            Vector3 movement = new Vector3(0, 0, -platformData.MoveSpeed * Time.deltaTime);
+            PlatformView.transform.position += movement;
+
+            foreach (ObstacleController obstacle in spawnedObstacles)
+            {
+                if (obstacle.ObstacleView != null && obstacle.ObstacleView.gameObject.activeInHierarchy)
+                {
+                    obstacle.ObstacleView.transform.position += movement;
+                }
+            }
         }
 
-        private void SpawnObstacle()
+        private void SpawnObstacle(int index)
         {
+            if (index == 1)
+            {
+                return;
+            }
+
             ObstacleScriptableObject obstacleScriptableObject =
                 GameService.Instance.ObstacleService.ObstacleScriptableObject;
 
@@ -47,17 +68,23 @@ namespace DodoRun.Platform
 
             int numberOfSegments = Mathf.FloorToInt(platformLength / segmentLength);
 
-            for (int i = 0; i < numberOfSegments; i++)
+            float platformBackEdgeZ = PlatformView.transform.position.z - (platformLength / 2f);
+
+            int startSegmentIndex = Mathf.CeilToInt(platformData.SafeZoneDistance / segmentLength);
+
+            for (int i = startSegmentIndex; i < numberOfSegments; i++)
             {
-                if (Random.value < spawnProbability)
+                bool shouldSpawn = (i == startSegmentIndex) || (Random.value < spawnProbability);
+
+                if (shouldSpawn)
                 {
-                    float segmentZ = platformView.transform.position.z
-                                         + (i * segmentLength)
-                                         + (segmentLength / 2f);
+                    float segmentZ = platformBackEdgeZ
+                                            + (i * segmentLength)
+                                            + (segmentLength / 2f);
 
                     Vector3 segmentSpawnBase = new Vector3(
-                        platformView.transform.position.x,
-                        platformView.transform.position.y,
+                        PlatformView.transform.position.x,
+                        PlatformView.transform.position.y,
                         segmentZ
                     );
 
@@ -65,7 +92,7 @@ namespace DodoRun.Platform
                         GameService.Instance.ObstacleService.SpawnRandomPattern(
                             segmentSpawnBase,
                             laneOffset,
-                            platformView.transform
+                            PlatformView.transform
                         );
 
                     if (patternControllers != null)
@@ -76,8 +103,10 @@ namespace DodoRun.Platform
             }
         }
 
-        public void ResetPlatform(Vector3 spawnPos)
+        public void ResetPlatform(Vector3 spawnPos, int index)
         {
+            platformIndex = index; 
+
             isDestroyed = false;
             hasSpawnedNext = false;
 
@@ -85,18 +114,18 @@ namespace DodoRun.Platform
             {
                 GameService.Instance.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
             }
-            spawnedObstacles.Clear(); 
+            spawnedObstacles.Clear();
 
-            Collider col = platformView.GetComponent<Collider>();
+            Collider col = PlatformView.GetComponent<Collider>();
             col.enabled = false;
 
-            platformView.transform.position = spawnPos;
+            PlatformView.transform.position = spawnPos;
 
-            platformView.gameObject.SetActive(true);
+            PlatformView.gameObject.SetActive(true);
 
             col.enabled = true;
 
-            SpawnObstacle();
+            SpawnObstacle(platformIndex);
         }
 
         public void HandleCollision(Collider collider)
@@ -108,9 +137,9 @@ namespace DodoRun.Platform
                 float length = platformData.PlatformLength;
 
                 Vector3 spawnPos = new Vector3(
-                    platformView.transform.position.x,
-                    platformView.transform.position.y,
-                    platformView.transform.position.z + length - 0.2f
+                    PlatformView.transform.position.x,
+                    PlatformView.transform.position.y,
+                    PlatformView.transform.position.z + length - 0.2f
                     );
 
                 PlatformController controller = GameService.Instance.PlatformService.CreatePlatform(spawnPos);
@@ -127,7 +156,7 @@ namespace DodoRun.Platform
                 spawnedObstacles.Clear();
 
                 GameService.Instance.PlatformService.ReturnPlatformToPool(this);
-                platformView.gameObject.SetActive(false);
+                PlatformView.gameObject.SetActive(false);
                 return;
             }
         }

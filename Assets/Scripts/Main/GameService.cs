@@ -14,9 +14,11 @@ namespace DodoRun.Main
         public EventService EventService { get; private set; }
         public ObstacleService ObstacleService { get; private set; }
 
+        public bool IsGameRunning { get; private set; } = true;
+
         [SerializeField] private PlatformScriptableObject platformScriptableObject;
         [SerializeField] private PlayerScriptableObject playerScriptableObject;
-        [SerializeField] private ObstacleScriptableObject obstacleScriptableObject; 
+        [SerializeField] private ObstacleScriptableObject obstacleScriptableObject;
 
         protected override void Awake()
         {
@@ -31,13 +33,24 @@ namespace DodoRun.Main
 
         private void Update()
         {
+            if (!IsGameRunning) return;
+
             PlatformService.UpdatePlatform();
             PlayerService.UpdatePlayer();
         }
 
         private void FixedUpdate()
         {
+            if (!IsGameRunning) return;
+
             PlayerService.FixedUpdatePlayer();
+        }
+
+        public void GameOver()
+        {
+            if (!IsGameRunning) return;
+            IsGameRunning = false;
+            Debug.Log("Game Over! All platform movement has stopped.");
         }
     }
 }

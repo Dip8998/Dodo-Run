@@ -10,5 +10,6 @@ namespace DodoRun.Platform
         public float PlatformLength;
         public Vector3 spawnPosition;
         public float LaneOffset;
+        public float SafeZoneDistance;
     }
 }

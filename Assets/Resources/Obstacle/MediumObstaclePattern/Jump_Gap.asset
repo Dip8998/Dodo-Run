@@ -19,4 +19,4 @@ MonoBehaviour:
   - Lane: 1
     ObstaclePrefab: {fileID: -8570173174595304936, guid: 4123c4341a5bfb745ae731f9c277f767, type: 3}
     ZOffset: 1.5
-  DifficultyRating: 2
+  DifficultyRating: 3

@@ -7,8 +7,9 @@ namespace DodoRun.Platform
     {
         public PlatformScriptableObject PlatformScriptableObject { get; private set; }
         private PlatformPool platformPool;
+        private int platformCounter = 0; 
 
-        public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
+        public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
         {
             PlatformScriptableObject = data;
             platformPool = new PlatformPool(PlatformScriptableObject);
@@ -22,7 +23,8 @@ namespace DodoRun.Platform
 
         public PlatformController CreatePlatform(Vector3 spawnPos)
         {
-            PlatformController controller = platformPool.GetPlatform(spawnPos);
+            platformCounter++;
+            PlatformController controller = platformPool.GetPlatform(spawnPos, platformCounter);
             return controller;
         }
 

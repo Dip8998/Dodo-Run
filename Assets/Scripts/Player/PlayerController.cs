@@ -1,5 +1,6 @@
 ﻿using DodoRun.Main;
 using System.Collections;
+using System.Xml;
 using UnityEngine;
 
 namespace DodoRun.Player
@@ -68,6 +69,21 @@ namespace DodoRun.Player
         }
 
         public void FixedUpdatePlayer() => HandleGroundCheck();
+
+        public void Die()
+        {
+            if (playerStateMachine.CurrentState is PlayerDeadState)
+                return;
+
+            playerStateMachine.ChangeState(PlayerState.DEAD);
+        }
+
+        public void StopMovement()
+        {
+            Rigidbody.linearVelocity = Vector3.zero;
+            Rigidbody.angularVelocity = Vector3.zero;
+            Rigidbody.isKinematic = true; 
+        }
 
         public void MoveToLane()
         {
@@ -149,17 +165,47 @@ namespace DodoRun.Player
 
             Vector2 direction = diff.normalized;
 
+            bool inputConsumed = false;
+
             if (Vector2.Dot(direction, Vector2.right) > directionThreshold)
+            {
                 playerStateMachine.ChangeState(PlayerState.RIGHT_SWIPE);
+                inputConsumed = true;
+            }
             else if (Vector2.Dot(direction, Vector2.left) > directionThreshold)
+            {
                 playerStateMachine.ChangeState(PlayerState.LEFT_SWIPE);
+                inputConsumed = true;
+            }
             else if (Vector2.Dot(direction, Vector2.up) > directionThreshold)
             {
-                if (IsGroundedSafe()) playerStateMachine.ChangeState(PlayerState.JUMP);
-                else return;
+                if (IsGroundedSafe())
+                {
+                    playerStateMachine.ChangeState(PlayerState.JUMP);
+                    inputConsumed = true;
+                }
             }
             else if (Vector2.Dot(direction, Vector2.down) > directionThreshold)
+            {
                 playerStateMachine.ChangeState(PlayerState.ROLLING);
+                inputConsumed = true;
+            }
+
+            if (inputConsumed)
+            {
+                CanAcceptInput = false;
+                GameService.Instance.StartCoroutine(InputCooldown(0.1f));
+            }
+        }
+
+        private IEnumerator InputCooldown(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+
+            if (!IsSliding && !(playerStateMachine.CurrentState is PlayerDeadState))
+            {
+                CanAcceptInput = true;
+            }
         }
 
         bool IsGroundedSafe() => Time.time - lastGroundedTime < 0.05f;

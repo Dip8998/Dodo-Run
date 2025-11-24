@@ -1,0 +1,5 @@
+D:/SourceTree (Outscal)/OutscalGames(Unity)/Dodo Run/.utmp/Debug/84v4p2w3/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/SourceTree (Outscal)/OutscalGames(Unity)/Dodo Run/.utmp/Debug/84v4p2w3/arm64-v8a/CMakeFiles/rebuild_cache.dir
+D:/SourceTree (Outscal)/OutscalGames(Unity)/Dodo Run/.utmp/Debug/84v4p2w3/arm64-v8a/GameActivity/CMakeFiles/game.dir
+D:/SourceTree (Outscal)/OutscalGames(Unity)/Dodo Run/.utmp/Debug/84v4p2w3/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+D:/SourceTree (Outscal)/OutscalGames(Unity)/Dodo Run/.utmp/Debug/84v4p2w3/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir

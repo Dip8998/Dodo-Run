@@ -17,3 +17,4 @@ MonoBehaviour:
   PlatformLength: 40
   spawnPosition: {x: 0, y: 0, z: -2}
   LaneOffset: 2
+  SafeZoneDistance: 15

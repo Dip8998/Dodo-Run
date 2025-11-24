@@ -6,6 +6,7 @@
         LEFT_SWIPE,
         RIGHT_SWIPE,
         JUMP,
-        ROLLING
+        ROLLING,
+        DEAD
     }
 }

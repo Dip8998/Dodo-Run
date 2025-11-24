@@ -664,7 +664,7 @@ GameObject:
   - component: {fileID: -3417798397589257612}
   - component: {fileID: 946350962251410401}
   - component: {fileID: 2299656435061275409}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Platform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -752,8 +752,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 50, y: 30, z: 40}
-  m_Center: {x: 0, y: 14, z: 14.9}
+  m_Size: {x: 50, y: 0.5, z: 40}
+  m_Center: {x: 0, y: -0.5, z: 14.900002}
 --- !u!1001 &537771745706632843
 PrefabInstance:
   m_ObjectHideFlags: 0
