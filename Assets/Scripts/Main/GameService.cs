@@ -1,4 +1,5 @@
-﻿using DodoRun.Event;
+﻿using DodoRun.Coin;
+using DodoRun.Event;
 using DodoRun.Obstacle;
 using DodoRun.Platform;
 using DodoRun.Player;
@@ -13,12 +14,14 @@ namespace DodoRun.Main
         public PlayerService PlayerService { get; private set; }
         public EventService EventService { get; private set; }
         public ObstacleService ObstacleService { get; private set; }
+        public CoinService CoinService { get; private set; }
 
         public bool IsGameRunning { get; private set; } = true;
 
         [SerializeField] private PlatformScriptableObject platformScriptableObject;
         [SerializeField] private PlayerScriptableObject playerScriptableObject;
         [SerializeField] private ObstacleScriptableObject obstacleScriptableObject;
+        [SerializeField] private CoinScriptableObject coinScriptableObject; 
 
         protected override void Awake()
         {
@@ -28,6 +31,7 @@ namespace DodoRun.Main
             EventService = new EventService();
             PlayerService = new PlayerService(playerScriptableObject);
             ObstacleService = new ObstacleService(obstacleScriptableObject);
+            CoinService = new CoinService(coinScriptableObject);
             PlatformService = new PlatformService(platformScriptableObject, platformScriptableObject.spawnPosition);
         }
 

@@ -16,10 +16,13 @@ MonoBehaviour:
   - Lane: -1
     ObstaclePrefab: {fileID: 2729830559547779886, guid: c62bc169d8b00a344b346f0c7f34ce39, type: 3}
     ZOffset: 0
+    ContextTag: 2
   - Lane: 0
     ObstaclePrefab: {fileID: 2729830559547779886, guid: c62bc169d8b00a344b346f0c7f34ce39, type: 3}
     ZOffset: 0
+    ContextTag: 2
   - Lane: 1
     ObstaclePrefab: {fileID: 2729830559547779886, guid: c62bc169d8b00a344b346f0c7f34ce39, type: 3}
     ZOffset: 0
+    ContextTag: 2
   DifficultyRating: 4

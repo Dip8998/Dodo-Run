@@ -9,12 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16ceed2d8919c0f4196cba8758d0f0b1, type: 3}
-  m_Name: Jump_M
+  m_Script: {fileID: 11500000, guid: 5a20b7bb5729c654ab35de23338a1efb, type: 3}
+  m_Name: CoinPatternSO 1
   m_EditorClassIdentifier: 
-  ObstaclePositions:
+  CoinPositions:
   - Lane: 0
-    ObstaclePrefab: {fileID: 7388540785502154138, guid: f915f6ceed23c9047a4a16bb01ca7de4, type: 3}
+    ZOffset: -1
+    YOffsetOverride: 1.5
+  - Lane: 0
     ZOffset: 0
-    ContextTag: 1
-  DifficultyRating: 2
+    YOffsetOverride: 2
+  - Lane: 0
+    ZOffset: 1
+    YOffsetOverride: 1.5
+  ContextTag: 1

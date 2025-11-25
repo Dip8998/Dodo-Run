@@ -9,6 +9,7 @@ namespace DodoRun.Obstacle
         public PlatformLane Lane;
         public ObstacleView ObstaclePrefab;
         public float ZOffset;
+        public int ContextTag = 0;
     }
 
 

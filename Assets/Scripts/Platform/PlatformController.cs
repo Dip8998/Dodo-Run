@@ -1,4 +1,5 @@
-﻿using DodoRun.Main;
+﻿using DodoRun.Coin;
+using DodoRun.Main;
 using DodoRun.Obstacle;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +14,9 @@ namespace DodoRun.Platform
         private bool hasSpawnedNext = false;
         private bool isDestroyed = false;
         private int platformIndex; 
+        private List<int> segmentContextTags = new List<int>();
         private List<ObstacleController> spawnedObstacles = new List<ObstacleController>();
+        private List<CoinController> spawnedCoins = new List<CoinController>();
 
         public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos, int index)
         {
@@ -28,6 +31,7 @@ namespace DodoRun.Platform
             rigidbody = PlatformView.GetComponent<Rigidbody>();
             PlatformView.SetController(this);
             SpawnObstacle(platformIndex);
+            SpawnCoins();
         }
 
         public void UpdatePlatform()
@@ -53,6 +57,7 @@ namespace DodoRun.Platform
 
         private void SpawnObstacle(int index)
         {
+            segmentContextTags.Clear();
             if (index == 1)
             {
                 return;
@@ -75,6 +80,7 @@ namespace DodoRun.Platform
             for (int i = startSegmentIndex; i < numberOfSegments; i++)
             {
                 bool shouldSpawn = (i == startSegmentIndex) || (Random.value < spawnProbability);
+                segmentContextTags.Add(0);
 
                 if (shouldSpawn)
                 {
@@ -88,24 +94,89 @@ namespace DodoRun.Platform
                         segmentZ
                     );
 
+                    int obstacleTag = 0;
                     List<ObstacleController> patternControllers =
                         GameService.Instance.ObstacleService.SpawnRandomPattern(
                             segmentSpawnBase,
                             laneOffset,
-                            PlatformView.transform
+                            PlatformView.transform,
+                            out obstacleTag 
                         );
 
-                    if (patternControllers != null)
+                    if (patternControllers != null && obstacleTag != 0)
                     {
                         spawnedObstacles.AddRange(patternControllers);
+
+                        int currentSegmentIndex = segmentContextTags.Count - 1;
+                        segmentContextTags[currentSegmentIndex] = obstacleTag;
                     }
+                }
+            }
+        }
+
+        private void SpawnCoins()
+        {
+            CoinScriptableObject coinScriptableObject = GameService.Instance.CoinService.CoinScriptableObject;
+
+            float platformLength = platformData.PlatformLength;
+            float segmentLength = GameService.Instance.ObstacleService.ObstacleScriptableObject.ObstacleSegmentLength;
+            float laneOffset = platformData.LaneOffset;
+
+            int numberOfSegments = Mathf.FloorToInt(platformLength / segmentLength);
+            int startSegmentIndex = Mathf.CeilToInt(platformData.SafeZoneDistance / segmentLength);
+
+            float platformBackEdgeZ = PlatformView.transform.position.z - (platformLength / 2f);
+
+            for (int i = startSegmentIndex; i < numberOfSegments; i++)
+            {
+                int segmentListIndex = i - startSegmentIndex;
+
+                if (segmentListIndex >= segmentContextTags.Count) continue;
+
+                int obstacleContextTag = segmentContextTags[segmentListIndex];
+
+                float segmentZ = platformBackEdgeZ
+                                 + (i * segmentLength)
+                                 + (segmentLength / 2f);
+
+                Vector3 segmentSpawnBase = new Vector3(
+                    PlatformView.transform.position.x,
+                    PlatformView.transform.position.y,
+                    segmentZ
+                );
+
+                List<CoinController> patternControllers = null;
+
+                if (obstacleContextTag != 0)
+                {
+                    patternControllers =
+                        GameService.Instance.CoinService.SpawnContextualCoinPattern(
+                            segmentSpawnBase,
+                            laneOffset,
+                            PlatformView.transform,
+                            obstacleContextTag 
+                        );
+                }
+                else if (Random.value < coinScriptableObject.SpawnProbability)
+                {
+                    patternControllers =
+                        GameService.Instance.CoinService.SpawnRandomCoinPattern(
+                            segmentSpawnBase,
+                            laneOffset,
+                            PlatformView.transform
+                        );
+                }
+
+                if (patternControllers != null)
+                {
+                    spawnedCoins.AddRange(patternControllers);
                 }
             }
         }
 
         public void ResetPlatform(Vector3 spawnPos, int index)
         {
-            platformIndex = index; 
+            platformIndex = index;
 
             isDestroyed = false;
             hasSpawnedNext = false;
@@ -115,6 +186,12 @@ namespace DodoRun.Platform
                 GameService.Instance.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
             }
             spawnedObstacles.Clear();
+
+            for (int i = spawnedCoins.Count - 1; i >= 0; i--)
+            {
+                GameService.Instance.CoinService.ReturnCoinToPool(spawnedCoins[i]);
+            }
+            spawnedCoins.Clear();
 
             Collider col = PlatformView.GetComponent<Collider>();
             col.enabled = false;
@@ -126,6 +203,7 @@ namespace DodoRun.Platform
             col.enabled = true;
 
             SpawnObstacle(platformIndex);
+            SpawnCoins();
         }
 
         public void HandleCollision(Collider collider)
