@@ -1,63 +1,172 @@
-﻿// ObstacleService.cs (REVISED)
+﻿using System.Collections.Generic;
 using DodoRun.Main;
-using DodoRun.Platform;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DodoRun.Obstacle
 {
     public class ObstacleService
     {
-        public ObstacleScriptableObject ObstacleScriptableObject { get; private set; }
-        private ObstaclePool obstaclePool;
+        public ObstacleView JumpObstaclePrefab { get; private set; }
+        public ObstacleView SlideObstaclePrefab { get; private set; }
+        public ObstacleView SlideOrJumpObstaclePrefab { get; private set; }
 
-        public ObstacleService(ObstacleScriptableObject data)
+        private readonly ObstaclePool obstaclePool;
+
+        private readonly Queue<ObstacleType> lastObstacleHistory = new Queue<ObstacleType>();
+        private readonly Queue<int> lastLaneHistory = new Queue<int>();
+        private const int historyLimit = 3;
+
+        public ObstacleService(
+            ObstacleView jumpPrefab,
+            ObstacleView slidePrefab,
+            ObstacleView slideOrJumpPrefab)
         {
-            ObstacleScriptableObject = data;
-            obstaclePool = new ObstaclePool(data);
+            JumpObstaclePrefab = jumpPrefab;
+            SlideObstaclePrefab = slidePrefab;
+            SlideOrJumpObstaclePrefab = slideOrJumpPrefab;
+
+            obstaclePool = new ObstaclePool();
         }
 
-        public List<ObstacleController> SpawnRandomPattern(
-            Vector3 segmentStartPos,
-            float laneOffset,
-            Transform parent,
-            out int contextTag
-        )
+        public ObstacleController SpawnObstacle(
+            ObstacleType type,
+            int lane,
+            Vector3 basePos,
+            float laneOffset)
         {
-            contextTag = 0;
+            if (type == ObstacleType.None)
+                return null;
 
-            if (ObstacleScriptableObject.Patterns.Length == 0) return null;
+            ObstacleView prefab = GetPrefabByType(type);
+            if (prefab == null)
+                return null;
 
-            int patternIndex = Random.Range(0, ObstacleScriptableObject.Patterns.Length);
-            ObstaclePatternScriptableObject selectedPattern = ObstacleScriptableObject.Patterns[patternIndex];
+            Vector3 spawnPos = new Vector3(
+                basePos.x + lane * laneOffset,
+                basePos.y + 0.25f,
+                basePos.z
+            );
 
-            if (selectedPattern.ObstaclePositions.Length > 0)
-            {
-                contextTag = selectedPattern.ObstaclePositions[0].ContextTag;
-            }
+            ObstacleController controller =
+                obstaclePool.GetObstacle(prefab, spawnPos, null);
 
-            List<ObstacleController> spawned = new List<ObstacleController>();
-
-            foreach (var patternObstacle in selectedPattern.ObstaclePositions)
-            {
-                float laneX = (int)patternObstacle.Lane * laneOffset;
-                float obstacleYOffeset = 0.25f;
-
-                Vector3 spawnPosition = new Vector3(
-                    segmentStartPos.x + laneX,
-                    segmentStartPos.y + obstacleYOffeset,
-                    segmentStartPos.z + patternObstacle.ZOffset
-                );
-
-                ObstacleController controller = obstaclePool.GetObstacle(patternObstacle.ObstaclePrefab, spawnPosition, parent);
-                spawned.Add(controller);
-            }
-            return spawned;
+            return controller;
         }
 
         public void ReturnObstacleToPool(ObstacleController controller)
         {
-            obstaclePool.ReturnObstacleToPool(controller);
+            if (controller != null)
+            {
+                obstaclePool.ReturnObstacleToPool(controller);
+            }
+        }
+
+        public ObstacleType GetBalancedRandomObstacleType()
+        {
+            ObstacleType type;
+
+            do
+            {
+                type = GetRandomObstacleType();
+            }
+            while (IsRepeatingType(type));
+
+            AddObstacleHistory(type);
+            return type;
+        }
+
+        private ObstacleType GetRandomObstacleType()
+        {
+            var difficulty = GameService.Instance.Difficulty;
+
+            float obstacleProbability = difficulty.CurrentObstacleProbability;
+            float hardChance = difficulty.CurrentHardObstacleChance;
+
+            if (Random.value > obstacleProbability)
+                return ObstacleType.None;
+
+            bool spawnHard = Random.value < hardChance;
+
+            if (spawnHard)
+            {
+                return (Random.value < 0.5f) ? ObstacleType.SlideOnly : ObstacleType.SlideOrJump;
+            }
+            else
+            {
+                return ObstacleType.JumpOnly;
+            }
+        }
+
+        private bool IsRepeatingType(ObstacleType type)
+        {
+            if (type == ObstacleType.None) return false;
+            if (lastObstacleHistory.Count < historyLimit) return false;
+
+            foreach (ObstacleType t in lastObstacleHistory)
+            {
+                if (t != type) return false;
+            }
+
+            return true;
+        }
+
+        private void AddObstacleHistory(ObstacleType type)
+        {
+            lastObstacleHistory.Enqueue(type);
+            if (lastObstacleHistory.Count > historyLimit)
+                lastObstacleHistory.Dequeue();
+        }
+
+        public int GetBalancedLane()
+        {
+            int lane;
+            do
+            {
+                lane = GetRandomLane();
+            }
+            while (IsRepeatingLane(lane));
+
+            AddLaneHistory(lane);
+            return lane;
+        }
+
+        private int GetRandomLane()
+        {
+            return Random.Range(-1, 2);
+        }
+
+        private bool IsRepeatingLane(int lane)
+        {
+            if (lastLaneHistory.Count < historyLimit) return false;
+
+            foreach (int l in lastLaneHistory)
+            {
+                if (l != lane) return false;
+            }
+
+            return true;
+        }
+
+        private void AddLaneHistory(int lane)
+        {
+            lastLaneHistory.Enqueue(lane);
+            if (lastLaneHistory.Count > historyLimit)
+                lastLaneHistory.Dequeue();
+        }
+
+        private ObstacleView GetPrefabByType(ObstacleType type)
+        {
+            switch (type)
+            {
+                case ObstacleType.JumpOnly:
+                    return JumpObstaclePrefab;
+                case ObstacleType.SlideOnly:
+                    return SlideObstaclePrefab;
+                case ObstacleType.SlideOrJump:
+                    return SlideOrJumpObstaclePrefab;
+                default:
+                    return null;
+            }
         }
     }
 }

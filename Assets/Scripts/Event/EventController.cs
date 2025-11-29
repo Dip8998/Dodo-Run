@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace DodoRun.Event
-{ 
+{
     public class EventController<T>
     {
         public event Action<T> baseEvent;

@@ -1,4 +1,5 @@
 ﻿using DodoRun.Interfaces;
+using DodoRun.Main;
 using UnityEngine;
 
 namespace DodoRun.Player
@@ -12,13 +13,9 @@ namespace DodoRun.Player
 
         public void OnStateEnter()
         {
-            if(Owner.IsGrounded && !Owner.IsSliding)
+            if (Owner.IsGrounded && !Owner.IsSliding)
             {
-                Rigidbody rb = Owner.Rigidbody;
-                float jumpSpeed = Owner.PlayerScriptableObject.JumpSpeed;
-
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, jumpSpeed, rb.linearVelocity.z);
-                Owner.PlayerAnimator.SetTrigger("Jump");
+                GameService.Instance.StartCoroutine(Owner.DoSubwayJump());
             }
 
             stateMachine.ChangeState(PlayerState.RUNNING);

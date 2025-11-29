@@ -1,6 +1,5 @@
 ﻿using DodoRun.Main;
 using System.Collections;
-using System.Xml;
 using UnityEngine;
 
 namespace DodoRun.Player
@@ -28,12 +27,15 @@ namespace DodoRun.Player
         private Vector3 lastTouchPosition;
         private float touchStartTime;
         private float lastGroundedTime;
-        private float laneVelocity; 
+        private float laneVelocity;
 
         private const float minSwipeDistance = 80f;
         private const float minSwipeSpeed = 300f;
         private const float directionThreshold = 0.9f;
-        private const float AirborneLaneMoveSpeed = 16f; 
+
+        private bool isJumping = false;
+        private float jumpDuration = .75f;   
+        private float jumpHeight = 1.7f;
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
         {
@@ -66,6 +68,11 @@ namespace DodoRun.Player
         {
             HandleSwipeInputs();
             playerStateMachine.Update();
+
+            if (PlayerAnimator != null && GameService.Instance != null)
+            {
+                PlayerAnimator.speed = Mathf.Lerp(1f, 1.75f, GameService.Instance.Difficulty.Progress);
+            }
         }
 
         public void FixedUpdatePlayer() => HandleGroundCheck();
@@ -82,7 +89,7 @@ namespace DodoRun.Player
         {
             Rigidbody.linearVelocity = Vector3.zero;
             Rigidbody.angularVelocity = Vector3.zero;
-            Rigidbody.isKinematic = true; 
+            Rigidbody.isKinematic = true;
         }
 
         public void MoveToLane()
@@ -90,17 +97,18 @@ namespace DodoRun.Player
             float targetX = CurrentLane * PlayerScriptableObject.LaneOffset;
             Vector3 pos = playerView.transform.position;
 
-            if (IsGrounded)
+            if (IsGrounded && !isJumping)
             {
                 pos.x = Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f);
             }
             else
             {
-                pos.x = Mathf.MoveTowards(pos.x, targetX, AirborneLaneMoveSpeed * Time.deltaTime);
+                pos.x = Mathf.Lerp(pos.x, targetX, Time.deltaTime * 7f);
             }
 
             playerView.transform.position = pos;
         }
+
 
         private void HandleGroundCheck()
         {
@@ -209,5 +217,31 @@ namespace DodoRun.Player
         }
 
         bool IsGroundedSafe() => Time.time - lastGroundedTime < 0.05f;
+
+        public IEnumerator DoSubwayJump()
+        {
+            isJumping = true;
+            float timer = 0f;
+
+            PlayerAnimator.SetTrigger("Jump");
+
+            Vector3 startPos = playerView.transform.position;
+
+            while (timer < jumpDuration)
+            {
+                timer += Time.deltaTime;
+
+                float normalizedTime = timer / jumpDuration;
+                float yOffset = PlayerScriptableObject.JumpCurve.Evaluate(normalizedTime) * jumpHeight;
+
+                Vector3 pos = playerView.transform.position;
+                pos.y = startPos.y + yOffset;
+                playerView.transform.position = pos;
+
+                yield return null;
+            }
+
+            isJumping = false;
+        }
     }
 }

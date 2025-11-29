@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace DodoRun.Player
 {
@@ -13,5 +14,6 @@ namespace DodoRun.Player
         public float SwipeSpeed;
         public float JumpSpeed;
         public float LaneOffset;
+        public AnimationCurve JumpCurve;
     }
 }

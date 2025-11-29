@@ -1,4 +1,6 @@
-﻿namespace DodoRun.Player
+﻿using UnityEngine;
+
+namespace DodoRun.Player
 {
     public class PlayerService
     {
@@ -18,5 +20,16 @@
         {
             playerController.FixedUpdatePlayer();
         }
+
+        public float GetPlayerZ()
+        {
+            return playerController.Rigidbody.transform.position.z;
+        }
+
+        public Transform GetPlayerTransform()
+        {
+            return playerController?.Rigidbody?.transform;
+        }
+
     }
 }

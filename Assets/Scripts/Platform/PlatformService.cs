@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DodoRun.Platform
 {
@@ -7,9 +6,9 @@ namespace DodoRun.Platform
     {
         public PlatformScriptableObject PlatformScriptableObject { get; private set; }
         private PlatformPool platformPool;
-        private int platformCounter = 0; 
+        private int platformCounter = 0;
 
-        public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
+        public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
         {
             PlatformScriptableObject = data;
             platformPool = new PlatformPool(PlatformScriptableObject);

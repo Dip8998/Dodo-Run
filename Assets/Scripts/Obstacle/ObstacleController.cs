@@ -5,20 +5,30 @@ namespace DodoRun.Obstacle
     public class ObstacleController
     {
         public ObstacleView ObstacleView { get; private set; }
+
         private bool isUsed = true;
 
-        private Transform movementParent;
-
-        public ObstacleController(ObstacleView obstacleView, Vector3 spawnPos, Transform parent)
+        public ObstacleController(ObstacleView prefab, Vector3 spawnPos, Transform parent)
         {
-            ObstacleView = Object.Instantiate(obstacleView, spawnPos, Quaternion.identity, null);
-            movementParent = parent; 
+            SetupView(prefab, spawnPos, parent);
+        }
+
+        private void SetupView(ObstacleView prefab, Vector3 spawnPos, Transform parent)
+        {
+            ObstacleView = Object.Instantiate(prefab, spawnPos, Quaternion.identity, parent);
+            ObstacleView.SetController(this);
             isUsed = true;
         }
 
-        public void ResetObstacle(ObstacleView obstacleView, Vector3 spawnPos, Transform parent)
+        public void ResetObstacle(ObstacleView prefab, Vector3 spawnPos, Transform parent)
         {
-            movementParent = parent;
+            if (ObstacleView == null)
+            {
+                SetupView(prefab, spawnPos, parent);
+                return;
+            }
+
+            ObstacleView.transform.SetParent(parent);
             ObstacleView.transform.position = spawnPos;
             ObstacleView.gameObject.SetActive(true);
             isUsed = true;
@@ -26,7 +36,10 @@ namespace DodoRun.Obstacle
 
         public void Deactivate()
         {
-            ObstacleView.gameObject?.SetActive(false);
+            if (ObstacleView != null)
+            {
+                ObstacleView.gameObject.SetActive(false);
+            }
             isUsed = false;
         }
 

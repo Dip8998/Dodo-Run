@@ -5,40 +5,33 @@ namespace DodoRun.Obstacle
 {
     public class ObstaclePool
     {
-        private ObstacleScriptableObject obstacleData;
-        private Dictionary<ObstacleView, List<ObstacleController>> pools = new Dictionary<ObstacleView, List<ObstacleController>>();
-
-        public ObstaclePool(ObstacleScriptableObject data)
-        {
-            this.obstacleData = data;
-        }
+        private readonly Dictionary<ObstacleView, List<ObstacleController>> pools =
+            new Dictionary<ObstacleView, List<ObstacleController>>();
 
         public ObstacleController GetObstacle(ObstacleView prefab, Vector3 spawnPos, Transform parent)
         {
-            if (!pools.ContainsKey(prefab))
+            if (!pools.TryGetValue(prefab, out var list))
             {
-                pools.Add(prefab, new List<ObstacleController>());
+                list = new List<ObstacleController>();
+                pools.Add(prefab, list);
             }
 
-            ObstacleController obstacle = pools[prefab].Find(item => !item.IsUsed());
+            ObstacleController controller = list.Find(o => !o.IsUsed());
 
-            if (obstacle != null)
+            if (controller != null)
             {
-                obstacle.ResetObstacle(prefab, spawnPos, parent);
-                return obstacle;
+                controller.ResetObstacle(prefab, spawnPos, parent);
+                return controller;
             }
 
-            ObstacleController newObstacle = new ObstacleController(prefab, spawnPos, parent);
-            pools[prefab].Add(newObstacle);
-            return newObstacle;
+            ObstacleController newController = new ObstacleController(prefab, spawnPos, parent);
+            list.Add(newController);
+            return newController;
         }
 
         public void ReturnObstacleToPool(ObstacleController returnedObstacle)
         {
-            if (returnedObstacle != null)
-            {
-                returnedObstacle.Deactivate();
-            }
+            returnedObstacle?.Deactivate();
         }
     }
 }

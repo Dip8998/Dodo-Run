@@ -1,6 +1,5 @@
 ﻿using DodoRun.Interfaces;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
 namespace DodoRun.Player
 {
@@ -21,7 +20,7 @@ namespace DodoRun.Player
 
         private void AssignOwner()
         {
-            foreach(var playerState  in States.Values)
+            foreach (var playerState in States.Values)
             {
                 playerState.Owner = Owner;
             }
@@ -46,6 +45,6 @@ namespace DodoRun.Player
             CurrentState?.OnStateEnter();
         }
 
-        public void ChangeState(PlayerState state) => ChangeState(States[state]); 
+        public void ChangeState(PlayerState state) => ChangeState(States[state]);
     }
 }

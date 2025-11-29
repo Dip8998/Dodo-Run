@@ -21,7 +21,7 @@ namespace DodoRun.Platform
             }
         }
 
-        public PlatformController GetPlatform(Vector3 spawnPos, int platformIndex)
+        public PlatformController GetPlatform(Vector3 spawnPos, int platformIndex)
         {
             PooledPlateform platform = platforms.Find(item => !item.isUsed);
 
@@ -31,8 +31,7 @@ namespace DodoRun.Platform
                 platform.Platform.ResetPlatform(spawnPos, platformIndex);
                 return platform.Platform;
             }
-            return CreateNewPlatformPool(spawnPos, platformIndex);
-
+            return CreateNewPlatformPool(spawnPos, platformIndex);
         }
 
         public void ReturnPlatformToPool(PlatformController returnedPlatform)
@@ -45,10 +44,10 @@ namespace DodoRun.Platform
             }
         }
 
-        public PlatformController CreateNewPlatformPool(Vector3 spawnPos, int platformIndex)
+        public PlatformController CreateNewPlatformPool(Vector3 spawnPos, int platformIndex)
         {
             PooledPlateform platform = new PooledPlateform();
-            platform.Platform = new PlatformController(platformData, spawnPos, platformIndex);
+            platform.Platform = new PlatformController(platformData, spawnPos, platformIndex);
             platform.isUsed = true;
             platforms.Add(platform);
             return platform.Platform;

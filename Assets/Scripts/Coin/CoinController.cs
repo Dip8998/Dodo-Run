@@ -1,5 +1,5 @@
-﻿using DodoRun.Main;
-using UnityEngine;
+﻿using UnityEngine;
+using DodoRun.Main;
 
 namespace DodoRun.Coin
 {
@@ -16,7 +16,6 @@ namespace DodoRun.Coin
         private void SetupView(CoinView coinView, Vector3 spawnPos)
         {
             CoinView = Object.Instantiate(coinView, spawnPos, Quaternion.identity);
-
             CoinView.SetController(this);
             isUsed = true;
         }
@@ -28,6 +27,12 @@ namespace DodoRun.Coin
 
         public void ResetCoin(CoinView coinView, Vector3 spawnPos)
         {
+            if (CoinView == null)
+            {
+                SetupView(coinView, spawnPos);
+                return;
+            }
+
             CoinView.transform.position = spawnPos;
             CoinView.gameObject.SetActive(true);
             isUsed = true;
@@ -35,7 +40,10 @@ namespace DodoRun.Coin
 
         public void Deactivate()
         {
-            CoinView.gameObject?.SetActive(false);
+            if (CoinView != null)
+            {
+                CoinView.gameObject.SetActive(false);
+            }
             isUsed = false;
             GameService.Instance.CoinService.ReturnCoinToPool(this);
         }
@@ -43,3 +51,4 @@ namespace DodoRun.Coin
         public bool IsUsed() => isUsed;
     }
 }
+

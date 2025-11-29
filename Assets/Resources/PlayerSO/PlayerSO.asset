@@ -21,3 +21,36 @@ MonoBehaviour:
   SwipeSpeed: 30
   JumpSpeed: 5
   LaneOffset: 2
+  JumpCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.0000010174699
+      value: 0
+      inSlope: 2.0007615
+      outSlope: 2.0007615
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.50010467
+      value: 1.0005922
+      inSlope: 0.0007972717
+      outSlope: 0.0007972717
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1.000541
+      value: 0.00013650407
+      inSlope: -1.999167
+      outSlope: -1.999167
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

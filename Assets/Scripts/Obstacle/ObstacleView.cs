@@ -4,7 +4,9 @@ namespace DodoRun.Obstacle
 {
 	public class ObstacleView : MonoBehaviour
 	{
-		private ObstacleController obstacleController;
+        public float Height => GetComponent<Collider>().bounds.size.y;
+
+        private ObstacleController obstacleController;
 
 		public void SetController(ObstacleController obstacleController)
 		{

@@ -1,55 +1,55 @@
-﻿// CoinPool.cs
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace DodoRun.Coin
 {
     public class CoinPool
     {
-        private List<PooledCoin> coins = new List<PooledCoin>();
-        private CoinScriptableObject coinData;
+        private readonly List<PooledCoin> coins = new List<PooledCoin>();
+        private readonly CoinView coinPrefab;
 
-        public CoinPool(CoinScriptableObject coinData)
+        public CoinPool(CoinView coinPrefab, int initialCount = 10)
         {
-            this.coinData = coinData;
-            for (int i = 0; i < 10; i++)
+            this.coinPrefab = coinPrefab;
+
+            for (int i = 0; i < initialCount; i++)
             {
-                CreateNewCoinPool(Vector3.zero);
+                CreateNewCoin(Vector3.zero);
             }
         }
 
         public CoinController GetCoin(Vector3 spawnPos)
         {
-            PooledCoin pooledCoin = coins.Find(item => !item.isUsed);
+            PooledCoin pooled = coins.Find(c => !c.isUsed);
 
-            if (pooledCoin != null)
+            if (pooled != null)
             {
-                pooledCoin.isUsed = true;
-                pooledCoin.Controller.ResetCoin(coinData.CoinPrefab, spawnPos);
-                return pooledCoin.Controller;
+                pooled.isUsed = true;
+                pooled.Controller.ResetCoin(coinPrefab, spawnPos);
+                return pooled.Controller;
             }
 
-            return CreateNewCoinPool(spawnPos);
+            return CreateNewCoin(spawnPos);
         }
 
         public void ReturnCoinToPool(CoinController returnedCoin)
         {
-            PooledCoin pooledCoin = coins.Find(item => item.Controller.Equals(returnedCoin));
+            PooledCoin pooled = coins.Find(c => c.Controller == returnedCoin);
 
-            if (pooledCoin != null)
-            {
-                pooledCoin.isUsed = false;
-            }
+            if (pooled != null)
+                pooled.isUsed = false;
         }
 
-        private CoinController CreateNewCoinPool(Vector3 spawnPos)
+        private CoinController CreateNewCoin(Vector3 spawnPos)
         {
-            PooledCoin pooledCoin = new PooledCoin();
-            pooledCoin.Controller = new CoinController(coinData.CoinPrefab, spawnPos);
+            PooledCoin pooled = new PooledCoin
+            {
+                Controller = new CoinController(coinPrefab, spawnPos),
+                isUsed = true
+            };
 
-            pooledCoin.isUsed = true;
-            coins.Add(pooledCoin);
-            return pooledCoin.Controller;
+            coins.Add(pooled);
+            return pooled.Controller;
         }
 
         public class PooledCoin

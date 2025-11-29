@@ -11,7 +11,7 @@ namespace DodoRun.Player
 
         public void OnStateEnter()
         {
-            if(Owner.CurrentLane < 1)
+            if (Owner.CurrentLane < 1)
             {
                 Owner.CurrentLane++;
             }
