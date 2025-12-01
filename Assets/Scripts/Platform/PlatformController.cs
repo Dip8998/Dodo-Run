@@ -102,10 +102,10 @@ namespace DodoRun.Platform
                         lane = GameService.Instance.ObstacleService.GetBalancedLane();
                         trainLane = lane;
 
-                        int minLength = (p < 0.25f) ? 1 : (p < 0.5f ? 2 : 3);
-                        int maxLength = (p < 0.3f) ? 2 : (p < 0.7f ? 4 : 6);
+                        int minTrainSize = Mathf.RoundToInt(Mathf.Lerp(2f, 4f, p));
+                        int maxTrainSize = Mathf.RoundToInt(Mathf.Lerp(4f, 9f, p));
 
-                        trainSegmentsLeft = Random.Range(minLength, maxLength);
+                        trainSegmentsLeft = Random.Range(minTrainSize, maxTrainSize);
                     }
                     else
                     {
@@ -147,10 +147,19 @@ namespace DodoRun.Platform
         {
             float p = GameService.Instance.Difficulty.Progress;
 
-            float chance = Mathf.Lerp(0.02f, 0.18f, p);
+            if (platformIndex < 5)
+                return false;
+
+            float chance = Mathf.Lerp(0.12f, 0.55f, p);
+
+            if (GameService.Instance.Difficulty.CurrentSpeed > 20f)
+                chance += 0.05f;
+
+            chance = Mathf.Clamp01(chance);
 
             return Random.value < chance && trainSegmentsLeft == 0;
         }
+
 
 
         private void SpawnCoinsForSegment(
