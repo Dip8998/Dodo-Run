@@ -15,6 +15,6 @@ MonoBehaviour:
   Platform: {fileID: -3417798397589257612, guid: 6ffe787878516504f9919fd83899c81e, type: 3}
   MoveSpeed: 10
   PlatformLength: 40
-  spawnPosition: {x: 0, y: 0, z: -2}
+  spawnPosition: {x: 0, y: 0, z: -3}
   LaneOffset: 2
   SafeZoneDistance: 15

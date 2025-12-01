@@ -20,6 +20,8 @@ namespace DodoRun.Platform
         private readonly List<CoinController> spawnedCoins = new List<CoinController>();
 
         private const float SegmentLength = 10f;
+        private int trainSegmentsLeft = 0;
+        private int trainLane = 0;
 
         public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos, int index)
         {
@@ -84,13 +86,53 @@ namespace DodoRun.Platform
                 ObstacleType obstacleType = GameService.Instance.ObstacleService.GetBalancedRandomObstacleType();
                 int lane = GameService.Instance.ObstacleService.GetBalancedLane();
 
+                if (trainSegmentsLeft > 0)
+                {
+                    obstacleType = ObstacleType.Train;
+                    lane = trainLane;
+                    trainSegmentsLeft--;
+                }
+                else
+                {
+                    if (platformIndex > 2 && ShouldStartTrainRun())
+                    {
+                        float p = GameService.Instance.Difficulty.Progress;
+
+                        obstacleType = ObstacleType.Train;
+                        lane = GameService.Instance.ObstacleService.GetBalancedLane();
+                        trainLane = lane;
+
+                        int minLength = (p < 0.25f) ? 1 : (p < 0.5f ? 2 : 3);
+                        int maxLength = (p < 0.3f) ? 2 : (p < 0.7f ? 4 : 6);
+
+                        trainSegmentsLeft = Random.Range(minLength, maxLength);
+                    }
+                    else
+                    {
+                        obstacleType = GameService.Instance.ObstacleService.GetBalancedRandomObstacleType();
+                        lane = GameService.Instance.ObstacleService.GetBalancedLane();
+                    }
+                }
+
+                Vector3 spawnPos = segmentBase;
+
+                if (obstacleType == ObstacleType.Train)
+                {
+                    spawnPos.y = PlatformView.transform.position.y + 1.3f; 
+                }
+                else
+                {
+                    spawnPos.y = PlatformView.transform.position.y;
+                }
+
                 ObstacleController obstacle =
                     GameService.Instance.ObstacleService.SpawnObstacle(
                         obstacleType,
                         lane,
-                        segmentBase,
+                        spawnPos,
                         laneOffset
                     );
+
 
                 if (obstacle != null)
                 {
@@ -100,6 +142,16 @@ namespace DodoRun.Platform
                 SpawnCoinsForSegment(obstacleType, lane, segmentBase, laneOffset);
             }
         }
+
+        private bool ShouldStartTrainRun()
+        {
+            float p = GameService.Instance.Difficulty.Progress;
+
+            float chance = Mathf.Lerp(0.02f, 0.18f, p);
+
+            return Random.value < chance && trainSegmentsLeft == 0;
+        }
+
 
         private void SpawnCoinsForSegment(
             ObstacleType type,
@@ -121,9 +173,24 @@ namespace DodoRun.Platform
                     break;
 
                 case ObstacleType.SlideOrJump:
-                    int safeLane = GetSafeLaneFromDangerousLane(lane);
-                    SpawnStraightCoinRowOnLane(basePos, laneOffset, safeLane, coinCount);
-                    break;
+                    {
+                        bool spawnArc = Random.value > 0.5f;
+
+                        if (spawnArc)
+                        {
+                            SpawnCoinArc(basePos, laneOffset, lane, jumpCoinCount);
+                        }
+                        else
+                        {
+                            SpawnStraightCoinRowOnLane(basePos, laneOffset, lane, coinCount);
+                        }
+
+                        break;
+                    }
+
+                case ObstacleType.Train:
+                    return;
+
 
                 default:
                     if (ShouldSpawnCoinsForEmptySegment())
@@ -141,16 +208,6 @@ namespace DodoRun.Platform
             return Random.value < chance;
         }
 
-        private int GetSafeLaneFromDangerousLane(int dangerousLane)
-        {
-            if (dangerousLane == 0)
-            {
-                return Random.value > 0.5f ? -1 : 1;
-            }
-
-            return 0;
-        }
-
         private void SpawnRandomStraightCoinRow(
             Vector3 basePos,
             float laneOffset,
@@ -162,7 +219,7 @@ namespace DodoRun.Platform
 
         private void SpawnStraightCoinRowOnLane(
             Vector3 basePos,
-            float laneOffset,
+            float laneOffset,   
             int lane,
             int count)
         {
@@ -236,7 +293,7 @@ namespace DodoRun.Platform
             int lane,
             int count)
         {
-            float height = PlatformView.transform.position.y + 0.3f;
+            float height = PlatformView.transform.position.y + 0.5f;
 
             for (int i = 0; i < count; i++)
             {
@@ -257,6 +314,7 @@ namespace DodoRun.Platform
             platformIndex = index;
             isDestroyed = false;
             hasSpawnedNext = false;
+            trainSegmentsLeft = 0;
 
             for (int i = spawnedObstacles.Count - 1; i >= 0; i--)
             {

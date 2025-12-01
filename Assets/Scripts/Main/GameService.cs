@@ -26,6 +26,7 @@ namespace DodoRun.Main
         [SerializeField] private ObstacleView jumpObstaclePrefab;
         [SerializeField] private ObstacleView slideObstaclePrefab;
         [SerializeField] private ObstacleView slideOrJumpObstaclePrefab;
+        [SerializeField] private ObstacleView trainObstaclePrefab;
 
         [Header("Coin Settings")]
         [SerializeField] private CoinView coinPrefab;
@@ -46,11 +47,7 @@ namespace DodoRun.Main
 
             Difficulty = new DifficultyManager(difficultySettings);
 
-            ObstacleService = new ObstacleService(
-                jumpObstaclePrefab,
-                slideObstaclePrefab,
-                slideOrJumpObstaclePrefab
-            );
+            ObstacleService = new ObstacleService(jumpObstaclePrefab, slideObstaclePrefab, slideOrJumpObstaclePrefab, trainObstaclePrefab);
 
             CoinService = new CoinService(
                 coinPrefab,

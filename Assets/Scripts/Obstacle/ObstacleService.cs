@@ -9,6 +9,7 @@ namespace DodoRun.Obstacle
         public ObstacleView JumpObstaclePrefab { get; private set; }
         public ObstacleView SlideObstaclePrefab { get; private set; }
         public ObstacleView SlideOrJumpObstaclePrefab { get; private set; }
+        public ObstacleView TrainObstaclePrefab { get; private set; } 
 
         private readonly ObstaclePool obstaclePool;
 
@@ -17,13 +18,15 @@ namespace DodoRun.Obstacle
         private const int historyLimit = 3;
 
         public ObstacleService(
-            ObstacleView jumpPrefab,
-            ObstacleView slidePrefab,
-            ObstacleView slideOrJumpPrefab)
+         ObstacleView jumpPrefab,
+         ObstacleView slidePrefab,
+         ObstacleView slideOrJumpPrefab,
+         ObstacleView trainPrefab)                  
         {
             JumpObstaclePrefab = jumpPrefab;
             SlideObstaclePrefab = slidePrefab;
             SlideOrJumpObstaclePrefab = slideOrJumpPrefab;
+            TrainObstaclePrefab = trainPrefab;
 
             obstaclePool = new ObstaclePool();
         }
@@ -164,6 +167,8 @@ namespace DodoRun.Obstacle
                     return SlideObstaclePrefab;
                 case ObstacleType.SlideOrJump:
                     return SlideOrJumpObstaclePrefab;
+                case ObstacleType.Train:                   
+                    return TrainObstaclePrefab;
                 default:
                     return null;
             }

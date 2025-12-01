@@ -8,7 +8,6 @@ namespace DodoRun.Player
         private PlayerController playerController;
         [SerializeField] private Transform groundCheckPosition;
 
-
         private int deadlyObstacleLayer;
 
         public Transform GroundCheckPosition => groundCheckPosition;

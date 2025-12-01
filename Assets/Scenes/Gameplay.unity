@@ -321,16 +321,17 @@ MonoBehaviour:
   jumpObstaclePrefab: {fileID: 7388540785502154138, guid: f915f6ceed23c9047a4a16bb01ca7de4, type: 3}
   slideObstaclePrefab: {fileID: 2729830559547779886, guid: c62bc169d8b00a344b346f0c7f34ce39, type: 3}
   slideOrJumpObstaclePrefab: {fileID: -8570173174595304936, guid: 4123c4341a5bfb745ae731f9c277f767, type: 3}
+  trainObstaclePrefab: {fileID: -7621239499198444678, guid: 599a51b8b58ae7748802677726621036, type: 3}
   coinPrefab: {fileID: 3472038728655094765, guid: bddde96586ad17d4490632b9a89409b2, type: 3}
   coinBaseVerticalOffset: 0.5
   difficultySettings:
-    StartObstacleProbability: 0.3
-    MaxObstacleProbability: 0.85
-    StartHardObstacleChance: 0.1
-    MaxHardObstacleChance: 0.6
+    StartObstacleProbability: 0.5
+    MaxObstacleProbability: 1.5
+    StartHardObstacleChance: 0.3
+    MaxHardObstacleChance: 0.8
     StartSpeed: 13
     MaxSpeed: 28
-    DifficultyRampTime: 500
+    DifficultyRampTime: 100
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0

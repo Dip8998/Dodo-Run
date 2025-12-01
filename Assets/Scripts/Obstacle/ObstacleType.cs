@@ -5,6 +5,7 @@
         None = 0,
         JumpOnly,
         SlideOrJump,
-        SlideOnly
+        SlideOnly,
+        Train
     }
 }
