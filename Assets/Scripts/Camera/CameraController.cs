@@ -10,25 +10,41 @@ namespace DodoRun.Camera
         [SerializeField] private float rotationSmoothness = 8f;
 
         private Transform currentTarget;
+        private Transform cachedTransform;
+
         private Vector3 velocity = Vector3.zero;
+        private Quaternion forwardLookRotation;
 
         private void Awake()
         {
+            cachedTransform = transform;
+            forwardLookRotation = Quaternion.LookRotation(Vector3.forward);
+
             GameService.Instance.EventService.OnPlayerSpawned.AddListner(BindToPlayer);
         }
 
-        private void OnDestroy() =>
+        private void OnDestroy()
+        {
             GameService.Instance?.EventService?.OnPlayerSpawned?.RemoveListner(BindToPlayer);
+        }
 
         private void LateUpdate()
         {
             if (currentTarget == null) return;
 
-            Vector3 desiredPos = currentTarget.position + playerOffset;
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref velocity, followSmoothness);
+            Vector3 targetPos = currentTarget.position + playerOffset;
+            cachedTransform.position = Vector3.SmoothDamp(
+                cachedTransform.position,
+                targetPos,
+                ref velocity,
+                followSmoothness
+            );
 
-            Quaternion desiredRot = Quaternion.LookRotation(Vector3.forward);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, rotationSmoothness * Time.deltaTime);
+            cachedTransform.rotation = Quaternion.Slerp(
+                cachedTransform.rotation,
+                forwardLookRotation,
+                rotationSmoothness * Time.deltaTime
+            );
         }
 
         private void BindToPlayer(Transform player)

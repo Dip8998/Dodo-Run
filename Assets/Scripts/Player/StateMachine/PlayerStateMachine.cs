@@ -7,7 +7,8 @@ namespace DodoRun.Player
     {
         private PlayerController Owner;
         public IPlayerState CurrentState { get; private set; }
-        protected Dictionary<PlayerState, IPlayerState> States = new();
+
+        private readonly Dictionary<PlayerState, IPlayerState> States = new();
 
         public PlayerStateMachine(PlayerController owner)
         {
@@ -20,10 +21,8 @@ namespace DodoRun.Player
 
         private void AssignOwner()
         {
-            foreach (var playerState in States.Values)
-            {
-                playerState.Owner = Owner;
-            }
+            foreach (var state in States.Values)
+                state.Owner = Owner;
         }
 
         private void CreateState()

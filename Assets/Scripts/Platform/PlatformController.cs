@@ -12,6 +12,9 @@ namespace DodoRun.Platform
         public PlatformView PlatformView { get; private set; }
 
         private Rigidbody rigidbody;
+        private Transform platformTransform;
+        private Collider platformCollider;
+
         private bool hasSpawnedNext = false;
         private bool isDestroyed = false;
         private int platformIndex;
@@ -33,7 +36,9 @@ namespace DodoRun.Platform
         private void SetupView(Vector3 spawnPos)
         {
             PlatformView = Object.Instantiate(platformData.Platform, spawnPos, Quaternion.identity);
+            platformTransform = PlatformView.transform;
             rigidbody = PlatformView.GetComponent<Rigidbody>();
+            platformCollider = PlatformView.GetComponent<Collider>();
             PlatformView.SetController(this);
 
             SpawnObstaclesAndCoinsProcedural();
@@ -45,15 +50,23 @@ namespace DodoRun.Platform
             if (!GameService.Instance.IsGameRunning) return;
 
             float speed = GameService.Instance.Difficulty.CurrentSpeed;
-            Vector3 movement = new Vector3(0f, 0f, -speed * Time.deltaTime);
+            float delta = Time.deltaTime;
 
-            PlatformView.transform.position += movement;
+            Vector3 movement = new Vector3(0f, 0f, -speed * delta);
 
-            foreach (ObstacleController obstacle in spawnedObstacles)
+            Vector3 platformPos = platformTransform.position;
+            platformPos += movement;
+            platformTransform.position = platformPos;
+
+            for (int i = 0; i < spawnedObstacles.Count; i++)
             {
-                if (obstacle.ObstacleView != null && obstacle.ObstacleView.gameObject.activeInHierarchy)
+                ObstacleView view = spawnedObstacles[i].ObstacleView;
+                if (view != null && view.gameObject.activeInHierarchy)
                 {
-                    obstacle.ObstacleView.transform.position += movement;
+                    Transform t = view.transform;
+                    Vector3 pos = t.position;
+                    pos += movement;
+                    t.position = pos;
                 }
             }
         }
@@ -66,10 +79,14 @@ namespace DodoRun.Platform
             float platformLength = platformData.PlatformLength;
             float laneOffset = platformData.LaneOffset;
 
-            float platformBackEdgeZ = PlatformView.transform.position.z - (platformLength / 2f);
+            float platformBackEdgeZ = platformTransform.position.z - (platformLength / 2f);
             int numberOfSegments = Mathf.FloorToInt(platformLength / SegmentLength);
             int startSegmentIndex = Mathf.CeilToInt((platformData.SafeZoneDistance + 10f) / SegmentLength);
-    
+
+            var gameService = GameService.Instance;
+            var obstacleService = gameService.ObstacleService;
+            var coinService = gameService.CoinService;
+
             for (int i = startSegmentIndex; i < numberOfSegments; i++)
             {
                 float segmentZ =
@@ -78,13 +95,13 @@ namespace DodoRun.Platform
                     (SegmentLength / 2f);
 
                 Vector3 segmentBase = new Vector3(
-                    PlatformView.transform.position.x,
-                    PlatformView.transform.position.y,
+                    platformTransform.position.x,
+                    platformTransform.position.y,
                     segmentZ
                 );
 
-                ObstacleType obstacleType = GameService.Instance.ObstacleService.GetBalancedRandomObstacleType();
-                int lane = GameService.Instance.ObstacleService.GetBalancedLane();
+                ObstacleType obstacleType = obstacleService.GetBalancedRandomObstacleType();
+                int lane = obstacleService.GetBalancedLane();
 
                 if (trainSegmentsLeft > 0)
                 {
@@ -96,10 +113,10 @@ namespace DodoRun.Platform
                 {
                     if (platformIndex > 2 && ShouldStartTrainRun())
                     {
-                        float p = GameService.Instance.Difficulty.Progress;
+                        float p = gameService.Difficulty.Progress;
 
                         obstacleType = ObstacleType.Train;
-                        lane = GameService.Instance.ObstacleService.GetBalancedLane();
+                        lane = obstacleService.GetBalancedLane();
                         trainLane = lane;
 
                         int minTrainSize = Mathf.RoundToInt(Mathf.Lerp(2f, 4f, p));
@@ -109,8 +126,8 @@ namespace DodoRun.Platform
                     }
                     else
                     {
-                        obstacleType = GameService.Instance.ObstacleService.GetBalancedRandomObstacleType();
-                        lane = GameService.Instance.ObstacleService.GetBalancedLane();
+                        obstacleType = obstacleService.GetBalancedRandomObstacleType();
+                        lane = obstacleService.GetBalancedLane();
                     }
                 }
 
@@ -118,21 +135,20 @@ namespace DodoRun.Platform
 
                 if (obstacleType == ObstacleType.Train)
                 {
-                    spawnPos.y = PlatformView.transform.position.y + 1.3f; 
+                    spawnPos.y = platformTransform.position.y + 1.3f;
                 }
                 else
                 {
-                    spawnPos.y = PlatformView.transform.position.y;
+                    spawnPos.y = platformTransform.position.y + 0.25f;
                 }
 
                 ObstacleController obstacle =
-                    GameService.Instance.ObstacleService.SpawnObstacle(
+                    obstacleService.SpawnObstacle(
                         obstacleType,
                         lane,
                         spawnPos,
                         laneOffset
                     );
-
 
                 if (obstacle != null)
                 {
@@ -159,8 +175,6 @@ namespace DodoRun.Platform
 
             return Random.value < chance && trainSegmentsLeft == 0;
         }
-
-
 
         private void SpawnCoinsForSegment(
             ObstacleType type,
@@ -200,7 +214,6 @@ namespace DodoRun.Platform
                 case ObstacleType.Train:
                     return;
 
-
                 default:
                     if (ShouldSpawnCoinsForEmptySegment())
                     {
@@ -228,13 +241,15 @@ namespace DodoRun.Platform
 
         private void SpawnStraightCoinRowOnLane(
             Vector3 basePos,
-            float laneOffset,   
+            float laneOffset,
             int lane,
             int count)
         {
             float baseHeight =
-                PlatformView.transform.position.y +
+                platformTransform.position.y +
                 GameService.Instance.CoinService.BaseVerticalOffset;
+
+            var coinService = GameService.Instance.CoinService;
 
             for (int i = 0; i < count; i++)
             {
@@ -244,8 +259,8 @@ namespace DodoRun.Platform
                     basePos.z + (i * 1.5f)
                 );
 
-                CoinController coin = GameService.Instance.CoinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(PlatformView.transform);
+                CoinController coin = coinService.GetCoin(pos);
+                coin.CoinView.transform.SetParent(platformTransform);
                 spawnedCoins.Add(coin);
             }
         }
@@ -259,11 +274,14 @@ namespace DodoRun.Platform
             float obstacleHeight = 1.5f;
             Collider obstacleCollider = null;
 
-            foreach (var obs in spawnedObstacles)
+            for (int i = 0; i < spawnedObstacles.Count; i++)
             {
-                if (Mathf.Abs(obs.ObstacleView.transform.position.z - basePos.z) < 0.5f)
+                ObstacleView view = spawnedObstacles[i].ObstacleView;
+                if (view == null) continue;
+
+                if (Mathf.Abs(view.transform.position.z - basePos.z) < 0.5f)
                 {
-                    obstacleCollider = obs.ObstacleView.GetComponent<Collider>();
+                    obstacleCollider = view.GetComponent<Collider>();
                     break;
                 }
             }
@@ -273,11 +291,14 @@ namespace DodoRun.Platform
 
             float maxArcHeight = Mathf.Clamp(obstacleHeight * 1.2f, 1.5f, 4f);
 
-            float baseHeight = PlatformView.transform.position.y + GameService.Instance.CoinService.BaseVerticalOffset;
+            float baseHeight = platformTransform.position.y +
+                GameService.Instance.CoinService.BaseVerticalOffset;
 
             float arcStartOffset = -5f;
             float arcEndOffset = 5.5f;
             float step = (arcEndOffset - arcStartOffset) / (count - 1);
+
+            var coinService = GameService.Instance.CoinService;
 
             for (int i = 0; i < count; i++)
             {
@@ -290,8 +311,8 @@ namespace DodoRun.Platform
                     basePos.z + arcStartOffset + (i * step)
                 );
 
-                CoinController coin = GameService.Instance.CoinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(PlatformView.transform);
+                CoinController coin = coinService.GetCoin(pos);
+                coin.CoinView.transform.SetParent(platformTransform);
                 spawnedCoins.Add(coin);
             }
         }
@@ -302,7 +323,8 @@ namespace DodoRun.Platform
             int lane,
             int count)
         {
-            float height = PlatformView.transform.position.y + 0.5f;
+            float height = platformTransform.position.y + 0.5f;
+            var coinService = GameService.Instance.CoinService;
 
             for (int i = 0; i < count; i++)
             {
@@ -312,8 +334,8 @@ namespace DodoRun.Platform
                     basePos.z + (i * 1.2f)
                 );
 
-                CoinController coin = GameService.Instance.CoinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(PlatformView.transform);
+                CoinController coin = coinService.GetCoin(pos);
+                coin.CoinView.transform.SetParent(platformTransform);
                 spawnedCoins.Add(coin);
             }
         }
@@ -325,25 +347,31 @@ namespace DodoRun.Platform
             hasSpawnedNext = false;
             trainSegmentsLeft = 0;
 
+            var gameService = GameService.Instance;
+
             for (int i = spawnedObstacles.Count - 1; i >= 0; i--)
             {
-                GameService.Instance.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
+                gameService.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
             }
             spawnedObstacles.Clear();
 
-            Collider col = PlatformView.GetComponent<Collider>();
-            col.enabled = false;
+            if (platformCollider == null)
+                platformCollider = PlatformView.GetComponent<Collider>();
 
-            PlatformView.transform.position = spawnPos;
+            platformCollider.enabled = false;
+
+            platformTransform.position = spawnPos;
             PlatformView.gameObject.SetActive(true);
 
-            col.enabled = true;
+            platformCollider.enabled = true;
 
             SpawnObstaclesAndCoinsProcedural();
         }
 
         public void HandleCollision(Collider collider)
         {
+            var gameService = GameService.Instance;
+
             if (collider.gameObject.CompareTag("Create") && !hasSpawnedNext)
             {
                 hasSpawnedNext = true;
@@ -351,13 +379,13 @@ namespace DodoRun.Platform
                 float length = platformData.PlatformLength;
 
                 Vector3 spawnPos = new Vector3(
-                    PlatformView.transform.position.x,
-                    PlatformView.transform.position.y,
-                    PlatformView.transform.position.z + length - 0.2f
+                    platformTransform.position.x,
+                    platformTransform.position.y,
+                    platformTransform.position.z + length - 0.2f
                 );
 
                 PlatformController controller =
-                    GameService.Instance.PlatformService.CreatePlatform(spawnPos);
+                    gameService.PlatformService.CreatePlatform(spawnPos);
             }
 
             if (collider.gameObject.CompareTag("Destroy"))
@@ -366,21 +394,22 @@ namespace DodoRun.Platform
 
                 for (int i = spawnedObstacles.Count - 1; i >= 0; i--)
                 {
-                    GameService.Instance.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
+                    gameService.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
                 }
                 spawnedObstacles.Clear();
 
                 for (int i = spawnedCoins.Count - 1; i >= 0; i--)
                 {
-                    if (spawnedCoins[i].CoinView.transform.position.z < GameService.Instance.PlayerService.GetPlayerZ() - 2f)
+                    if (spawnedCoins[i].CoinView.transform.position.z <
+                        gameService.PlayerService.GetPlayerZ() - 2f)
                     {
-                        GameService.Instance.CoinService.ReturnCoinToPool(spawnedCoins[i]);
+                        gameService.CoinService.ReturnCoinToPool(spawnedCoins[i]);
                         spawnedCoins.RemoveAt(i);
                     }
                 }
                 spawnedCoins.Clear();
 
-                GameService.Instance.PlatformService.ReturnPlatformToPool(this);
+                gameService.PlatformService.ReturnPlatformToPool(this);
                 PlatformView.gameObject.SetActive(false);
             }
         }

@@ -8,30 +8,46 @@ namespace DodoRun.Obstacle
         private readonly Dictionary<ObstacleView, List<ObstacleController>> pools =
             new Dictionary<ObstacleView, List<ObstacleController>>();
 
+        private readonly Dictionary<ObstacleView, Stack<ObstacleController>> freeStacks =
+            new Dictionary<ObstacleView, Stack<ObstacleController>>();
+
         public ObstacleController GetObstacle(ObstacleView prefab, Vector3 spawnPos, Transform parent)
         {
-            if (!pools.TryGetValue(prefab, out var list))
+            // ensure pool exists
+            if (!pools.ContainsKey(prefab))
             {
-                list = new List<ObstacleController>();
-                pools.Add(prefab, list);
+                pools[prefab] = new List<ObstacleController>();
+                freeStacks[prefab] = new Stack<ObstacleController>();
             }
 
-            ObstacleController controller = list.Find(o => !o.IsUsed());
+            var stack = freeStacks[prefab];
 
-            if (controller != null)
+            if (stack.Count > 0)
             {
+                ObstacleController controller = stack.Pop();
                 controller.ResetObstacle(prefab, spawnPos, parent);
                 return controller;
             }
 
             ObstacleController newController = new ObstacleController(prefab, spawnPos, parent);
-            list.Add(newController);
+            pools[prefab].Add(newController);
             return newController;
         }
 
         public void ReturnObstacleToPool(ObstacleController returnedObstacle)
         {
-            returnedObstacle?.Deactivate();
+            if (returnedObstacle == null) return;
+
+            returnedObstacle.Deactivate();
+
+            foreach (var kvp in pools)
+            {
+                if (kvp.Value.Contains(returnedObstacle))
+                {
+                    freeStacks[kvp.Key].Push(returnedObstacle);
+                    break;
+                }
+            }
         }
     }
 }

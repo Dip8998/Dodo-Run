@@ -47,7 +47,12 @@ namespace DodoRun.Main
 
             Difficulty = new DifficultyManager(difficultySettings);
 
-            ObstacleService = new ObstacleService(jumpObstaclePrefab, slideObstaclePrefab, slideOrJumpObstaclePrefab, trainObstaclePrefab);
+            ObstacleService = new ObstacleService(
+                jumpObstaclePrefab,
+                slideObstaclePrefab,
+                slideOrJumpObstaclePrefab,
+                trainObstaclePrefab
+            );
 
             CoinService = new CoinService(
                 coinPrefab,
@@ -66,6 +71,8 @@ namespace DodoRun.Main
 
             PlatformService.UpdatePlatform();
             PlayerService.UpdatePlayer();
+
+            CoinService.UpdateCoins();
         }
 
         private void FixedUpdate()

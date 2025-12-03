@@ -20,13 +20,16 @@ namespace DodoRun.Player
         public float OriginalCenterY { get; private set; }
         public float SlideDuration { get; private set; } = 0.75f;
 
-        private PlayerStateMachine playerStateMachine;
+        private PlayerStateMachine stateMachine;
         private PlayerView playerView;
+        private Transform playerTransform;
+        private Transform groundCheckTransform;
 
         private Vector3 firstTouchPosition;
         private Vector3 lastTouchPosition;
         private float touchStartTime;
         private float lastGroundedTime;
+
         private float laneVelocity;
 
         private const float minSwipeDistance = 80f;
@@ -34,55 +37,66 @@ namespace DodoRun.Player
         private const float directionThreshold = 0.9f;
 
         private bool isJumping = false;
-        private float jumpDuration = .75f;   
+        private float jumpDuration = .75f;
         private float jumpHeight = 1.7f;
+
+        private GameService gameService;
 
         public PlayerController(PlayerScriptableObject playerScriptableObject)
         {
-            this.PlayerScriptableObject = playerScriptableObject;
+            PlayerScriptableObject = playerScriptableObject;
+
+            gameService = GameService.Instance;
             SetupView();
-            playerStateMachine = new PlayerStateMachine(this);
+
+            stateMachine = new PlayerStateMachine(this);
         }
 
         private void SetupView()
         {
             playerView = Object.Instantiate(PlayerScriptableObject.Player, PlayerScriptableObject.SpawnPosition, Quaternion.identity);
             playerView.SetController(this);
+
             Rigidbody = playerView.GetComponent<Rigidbody>();
             CapsuleCollider = playerView.GetComponent<CapsuleCollider>();
             PlayerAnimator = playerView.GetComponent<Animator>();
 
+            playerTransform = Rigidbody.transform;
+            groundCheckTransform = playerView.GroundCheckPosition;
+
             OriginalHeight = CapsuleCollider.height;
             OriginalCenterY = CapsuleCollider.center.y;
 
-            GameService.Instance.StartCoroutine(InvokeSpawn());
+            gameService.StartCoroutine(InvokeSpawn());
         }
 
         private IEnumerator InvokeSpawn()
         {
             yield return null;
-            GameService.Instance.EventService.OnPlayerSpawned.InvokeEvent(playerView.transform);
+            gameService.EventService.OnPlayerSpawned.InvokeEvent(playerTransform);
         }
 
         public void UpdatePlayer()
         {
             HandleSwipeInputs();
-            playerStateMachine.Update();
+            stateMachine.Update();
 
-            if (PlayerAnimator != null && GameService.Instance != null)
-            {
-                PlayerAnimator.speed = Mathf.Lerp(1f, 1.75f, GameService.Instance.Difficulty.Progress);
-            }
+            float speedMultiplier = Mathf.Lerp(1f, 1.75f, gameService.Difficulty.Progress);
+
+            if (PlayerAnimator != null)
+                PlayerAnimator.speed = speedMultiplier;
         }
 
-        public void FixedUpdatePlayer() => HandleGroundCheck();
+        public void FixedUpdatePlayer()
+        {
+            HandleGroundCheck();
+        }
 
         public void Die()
         {
-            if (playerStateMachine.CurrentState is PlayerDeadState)
-                return;
+            if (stateMachine.CurrentState is PlayerDeadState) return;
 
-            playerStateMachine.ChangeState(PlayerState.DEAD);
+            stateMachine.ChangeState(PlayerState.DEAD);
         }
 
         public void StopMovement()
@@ -95,7 +109,7 @@ namespace DodoRun.Player
         public void MoveToLane()
         {
             float targetX = CurrentLane * PlayerScriptableObject.LaneOffset;
-            Vector3 pos = playerView.transform.position;
+            Vector3 pos = playerTransform.position;
 
             if (IsGrounded && !isJumping)
             {
@@ -106,36 +120,28 @@ namespace DodoRun.Player
                 pos.x = Mathf.Lerp(pos.x, targetX, Time.deltaTime * 7f);
             }
 
-            playerView.transform.position = pos;
+            playerTransform.position = pos;
         }
-
 
         private void HandleGroundCheck()
         {
             if (IsSliding) return;
 
             IsGrounded = Physics.CheckSphere(
-                playerView.GroundCheckPosition.position,
+                groundCheckTransform.position,
                 PlayerScriptableObject.GroundCheckRadius,
                 PlayerScriptableObject.GroundLayer
             );
 
+            PlayerAnimator.SetBool("IsGrounded", IsGrounded);
+
             if (IsGrounded)
-            {
                 lastGroundedTime = Time.time;
-                PlayerAnimator.SetBool("IsGrounded", true);
-            }
-            else
-            {
-                PlayerAnimator.SetBool("IsGrounded", false);
-            }
         }
 
         private void HandleSwipeInputs()
         {
-            if (!CanAcceptInput) return;
-
-            if (Input.touchCount != 1) return;
+            if (!CanAcceptInput || Input.touchCount != 1) return;
 
             Touch touch = Input.GetTouch(0);
 
@@ -144,14 +150,13 @@ namespace DodoRun.Player
                 case TouchPhase.Began:
                     touchStartTime = Time.time;
                     firstTouchPosition = touch.position;
-                    lastTouchPosition = touch.position;
                     break;
+
                 case TouchPhase.Moved:
-                    lastTouchPosition = touch.position;
-                    break;
                 case TouchPhase.Ended:
                     lastTouchPosition = touch.position;
-                    DetectSwipeInputs();
+                    if (touch.phase == TouchPhase.Ended)
+                        DetectSwipeInputs();
                     break;
             }
         }
@@ -160,15 +165,12 @@ namespace DodoRun.Player
         {
             Vector2 diff = lastTouchPosition - firstTouchPosition;
             float distance = diff.magnitude;
-
             if (distance < minSwipeDistance) return;
 
-            float time = Time.time - touchStartTime;
+            float elapsed = Time.time - touchStartTime;
+            if (elapsed <= 0.01f) return;
 
-            if (time <= 0.01f) return;
-
-            float speed = distance / time;
-
+            float speed = distance / elapsed;
             if (speed < minSwipeSpeed) return;
 
             Vector2 direction = diff.normalized;
@@ -177,32 +179,29 @@ namespace DodoRun.Player
 
             if (Vector2.Dot(direction, Vector2.right) > directionThreshold)
             {
-                playerStateMachine.ChangeState(PlayerState.RIGHT_SWIPE);
+                stateMachine.ChangeState(PlayerState.RIGHT_SWIPE);
                 inputConsumed = true;
             }
             else if (Vector2.Dot(direction, Vector2.left) > directionThreshold)
             {
-                playerStateMachine.ChangeState(PlayerState.LEFT_SWIPE);
+                stateMachine.ChangeState(PlayerState.LEFT_SWIPE);
                 inputConsumed = true;
             }
-            else if (Vector2.Dot(direction, Vector2.up) > directionThreshold)
+            else if (Vector2.Dot(direction, Vector2.up) > directionThreshold && IsGroundedSafe())
             {
-                if (IsGroundedSafe())
-                {
-                    playerStateMachine.ChangeState(PlayerState.JUMP);
-                    inputConsumed = true;
-                }
+                stateMachine.ChangeState(PlayerState.JUMP);
+                inputConsumed = true;
             }
             else if (Vector2.Dot(direction, Vector2.down) > directionThreshold)
             {
-                playerStateMachine.ChangeState(PlayerState.ROLLING);
+                stateMachine.ChangeState(PlayerState.ROLLING);
                 inputConsumed = true;
             }
 
             if (inputConsumed)
             {
                 CanAcceptInput = false;
-                GameService.Instance.StartCoroutine(InputCooldown(0.1f));
+                gameService.StartCoroutine(InputCooldown(0.1f));
             }
         }
 
@@ -210,10 +209,8 @@ namespace DodoRun.Player
         {
             yield return new WaitForSeconds(duration);
 
-            if (!IsSliding && !(playerStateMachine.CurrentState is PlayerDeadState))
-            {
+            if (!IsSliding && !(stateMachine.CurrentState is PlayerDeadState))
                 CanAcceptInput = true;
-            }
         }
 
         bool IsGroundedSafe() => Time.time - lastGroundedTime < 0.05f;
@@ -225,18 +222,18 @@ namespace DodoRun.Player
 
             PlayerAnimator.SetTrigger("Jump");
 
-            Vector3 startPos = playerView.transform.position;
+            Vector3 startPos = playerTransform.position;
 
             while (timer < jumpDuration)
             {
                 timer += Time.deltaTime;
+                float t = timer / jumpDuration;
 
-                float normalizedTime = timer / jumpDuration;
-                float yOffset = PlayerScriptableObject.JumpCurve.Evaluate(normalizedTime) * jumpHeight;
+                float yOffset = PlayerScriptableObject.JumpCurve.Evaluate(t) * jumpHeight;
 
-                Vector3 pos = playerView.transform.position;
+                Vector3 pos = playerTransform.position;
                 pos.y = startPos.y + yOffset;
-                playerView.transform.position = pos;
+                playerTransform.position = pos;
 
                 yield return null;
             }

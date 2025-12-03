@@ -9,7 +9,7 @@ namespace DodoRun.Obstacle
         public ObstacleView JumpObstaclePrefab { get; private set; }
         public ObstacleView SlideObstaclePrefab { get; private set; }
         public ObstacleView SlideOrJumpObstaclePrefab { get; private set; }
-        public ObstacleView TrainObstaclePrefab { get; private set; } 
+        public ObstacleView TrainObstaclePrefab { get; private set; }
 
         private readonly ObstaclePool obstaclePool;
 
@@ -17,11 +17,13 @@ namespace DodoRun.Obstacle
         private readonly Queue<int> lastLaneHistory = new Queue<int>();
         private const int historyLimit = 3;
 
+        private readonly System.Random rng = new System.Random(); 
+
         public ObstacleService(
-         ObstacleView jumpPrefab,
-         ObstacleView slidePrefab,
-         ObstacleView slideOrJumpPrefab,
-         ObstacleView trainPrefab)                  
+            ObstacleView jumpPrefab,
+            ObstacleView slidePrefab,
+            ObstacleView slideOrJumpPrefab,
+            ObstacleView trainPrefab)
         {
             JumpObstaclePrefab = jumpPrefab;
             SlideObstaclePrefab = slidePrefab;
@@ -37,37 +39,29 @@ namespace DodoRun.Obstacle
             Vector3 basePos,
             float laneOffset)
         {
-            if (type == ObstacleType.None)
-                return null;
+            if (type == ObstacleType.None) return null;
 
             ObstacleView prefab = GetPrefabByType(type);
-            if (prefab == null)
-                return null;
+            if (prefab == null) return null;
 
             Vector3 spawnPos = new Vector3(
                 basePos.x + lane * laneOffset,
-                basePos.y + 0.25f,
+                basePos.y,
                 basePos.z
             );
 
-            ObstacleController controller =
-                obstaclePool.GetObstacle(prefab, spawnPos, null);
-
-            return controller;
+            return obstaclePool.GetObstacle(prefab, spawnPos, null);
         }
 
         public void ReturnObstacleToPool(ObstacleController controller)
         {
             if (controller != null)
-            {
                 obstaclePool.ReturnObstacleToPool(controller);
-            }
         }
 
         public ObstacleType GetBalancedRandomObstacleType()
         {
             ObstacleType type;
-
             do
             {
                 type = GetRandomObstacleType();
@@ -90,20 +84,14 @@ namespace DodoRun.Obstacle
 
             bool spawnHard = Random.value < hardChance;
 
-            if (spawnHard)
-            {
-                return (Random.value < 0.5f) ? ObstacleType.SlideOnly : ObstacleType.SlideOrJump;
-            }
-            else
-            {
-                return ObstacleType.JumpOnly;
-            }
+            return spawnHard
+                ? (Random.value < 0.5f ? ObstacleType.SlideOnly : ObstacleType.SlideOrJump)
+                : ObstacleType.JumpOnly;
         }
 
         private bool IsRepeatingType(ObstacleType type)
         {
-            if (type == ObstacleType.None) return false;
-            if (lastObstacleHistory.Count < historyLimit) return false;
+            if (type == ObstacleType.None || lastObstacleHistory.Count < historyLimit) return false;
 
             foreach (ObstacleType t in lastObstacleHistory)
             {
@@ -123,20 +111,14 @@ namespace DodoRun.Obstacle
         public int GetBalancedLane()
         {
             int lane;
-            do
-            {
-                lane = GetRandomLane();
-            }
+            do { lane = GetRandomLane(); }
             while (IsRepeatingLane(lane));
 
             AddLaneHistory(lane);
             return lane;
         }
 
-        private int GetRandomLane()
-        {
-            return Random.Range(-1, 2);
-        }
+        private int GetRandomLane() => Random.Range(-1, 2);
 
         private bool IsRepeatingLane(int lane)
         {
@@ -159,19 +141,14 @@ namespace DodoRun.Obstacle
 
         private ObstacleView GetPrefabByType(ObstacleType type)
         {
-            switch (type)
+            return type switch
             {
-                case ObstacleType.JumpOnly:
-                    return JumpObstaclePrefab;
-                case ObstacleType.SlideOnly:
-                    return SlideObstaclePrefab;
-                case ObstacleType.SlideOrJump:
-                    return SlideOrJumpObstaclePrefab;
-                case ObstacleType.Train:                   
-                    return TrainObstaclePrefab;
-                default:
-                    return null;
-            }
+                ObstacleType.JumpOnly => JumpObstaclePrefab,
+                ObstacleType.SlideOnly => SlideObstaclePrefab,
+                ObstacleType.SlideOrJump => SlideOrJumpObstaclePrefab,
+                ObstacleType.Train => TrainObstaclePrefab,
+                _ => null
+            };
         }
     }
 }

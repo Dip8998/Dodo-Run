@@ -6,6 +6,7 @@ namespace DodoRun.Platform
     public class PlatformPool
     {
         private List<PooledPlateform> platforms = new List<PooledPlateform>();
+        private Stack<PooledPlateform> freePlatforms = new Stack<PooledPlateform>();
         private PlatformScriptableObject platformData;
 
         public PlatformPool(PlatformScriptableObject platformData)
@@ -17,30 +18,39 @@ namespace DodoRun.Platform
         {
             for (int i = 0; i < platforms.Count; i++)
             {
-                platforms[i].Platform.UpdatePlatform();
+                if (platforms[i].isUsed)
+                {
+                    platforms[i].Platform.UpdatePlatform();
+                }
             }
         }
 
         public PlatformController GetPlatform(Vector3 spawnPos, int platformIndex)
         {
-            PooledPlateform platform = platforms.Find(item => !item.isUsed);
-
-            if (platform != null)
+            if (freePlatforms.Count > 0)
             {
+                PooledPlateform platform = freePlatforms.Pop();
                 platform.isUsed = true;
                 platform.Platform.ResetPlatform(spawnPos, platformIndex);
                 return platform.Platform;
             }
+
             return CreateNewPlatformPool(spawnPos, platformIndex);
         }
 
         public void ReturnPlatformToPool(PlatformController returnedPlatform)
         {
-            PooledPlateform platform = platforms.Find(item => item.Platform.Equals(returnedPlatform));
+            if (returnedPlatform == null) return;
 
-            if (platform != null)
+            for (int i = 0; i < platforms.Count; i++)
             {
-                platform.isUsed = false;
+                PooledPlateform platform = platforms[i];
+                if (platform.Platform == returnedPlatform && platform.isUsed)
+                {
+                    platform.isUsed = false;
+                    freePlatforms.Push(platform);
+                    break;
+                }
             }
         }
 

@@ -6,6 +6,7 @@ namespace DodoRun.Player
     public class PlayerView : MonoBehaviour
     {
         private PlayerController playerController;
+        private const string obstaccleLayerName = "DeadlyObstacle";
         [SerializeField] private Transform groundCheckPosition;
 
         private int deadlyObstacleLayer;
@@ -15,15 +16,7 @@ namespace DodoRun.Player
         public void SetController(PlayerController playerController)
         {
             this.playerController = playerController;
-            deadlyObstacleLayer = LayerMask.NameToLayer("DeadlyObstacle");
-        }
-
-        private void OnDrawGizmos()
-        {
-            if (GroundCheckPosition == null) return;
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(GroundCheckPosition.position, 0.08f);
+            deadlyObstacleLayer = LayerMask.NameToLayer(obstaccleLayerName);
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -32,8 +25,15 @@ namespace DodoRun.Player
             {
                 playerController.Die();
                 GameService.Instance.GameOver();
-                return;
             }
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (groundCheckPosition == null) return;
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(groundCheckPosition.position, 0.08f);
         }
     }
 }

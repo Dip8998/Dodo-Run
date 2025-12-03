@@ -6,6 +6,7 @@ namespace DodoRun.Coin
     public class CoinPool
     {
         private readonly List<PooledCoin> coins = new List<PooledCoin>();
+        private readonly Stack<PooledCoin> freeCoins = new Stack<PooledCoin>();
         private readonly CoinView coinPrefab;
 
         public CoinPool(CoinView coinPrefab, int initialCount = 10)
@@ -20,10 +21,9 @@ namespace DodoRun.Coin
 
         public CoinController GetCoin(Vector3 spawnPos)
         {
-            PooledCoin pooled = coins.Find(c => !c.isUsed);
-
-            if (pooled != null)
+            if (freeCoins.Count > 0)
             {
+                PooledCoin pooled = freeCoins.Pop();
                 pooled.isUsed = true;
                 pooled.Controller.ResetCoin(coinPrefab, spawnPos);
                 return pooled.Controller;
@@ -34,10 +34,18 @@ namespace DodoRun.Coin
 
         public void ReturnCoinToPool(CoinController returnedCoin)
         {
-            PooledCoin pooled = coins.Find(c => c.Controller == returnedCoin);
+            if (returnedCoin == null) return;
 
-            if (pooled != null)
-                pooled.isUsed = false;
+            for (int i = 0; i < coins.Count; i++)
+            {
+                PooledCoin pooled = coins[i];
+                if (pooled.Controller == returnedCoin && pooled.isUsed)
+                {
+                    pooled.isUsed = false;
+                    freeCoins.Push(pooled);
+                    break;
+                }
+            }
         }
 
         private CoinController CreateNewCoin(Vector3 spawnPos)
