@@ -332,6 +332,9 @@ MonoBehaviour:
     StartSpeed: 13
     MaxSpeed: 28
     DifficultyRampTime: 100
+  magnetPowerUpPrefab: {fileID: 7738556558198575713, guid: 2be381f789caf5945a356e4771772c7b, type: 3}
+  shieldPowerUpPrefab: {fileID: 182443155150489425, guid: 8e5ebeb1e42825a4cba8df7da2393e19, type: 3}
+  doubleScorePowerUpPrefab: {fileID: 8848292279444953440, guid: f42db8eb739fcab45979cd8b9846652e, type: 3}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
