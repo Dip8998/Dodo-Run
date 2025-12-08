@@ -324,6 +324,8 @@ MonoBehaviour:
   trainObstaclePrefab: {fileID: -7621239499198444678, guid: 599a51b8b58ae7748802677726621036, type: 3}
   coinPrefab: {fileID: 3472038728655094765, guid: bddde96586ad17d4490632b9a89409b2, type: 3}
   coinBaseVerticalOffset: 0.5
+  magnetPrefab: {fileID: 2297100979355476332, guid: 2be381f789caf5945a356e4771772c7b, type: 3}
+  shieldPrefab: {fileID: 8707343121001148180, guid: 8e5ebeb1e42825a4cba8df7da2393e19, type: 3}
   difficultySettings:
     StartObstacleProbability: 0.5
     MaxObstacleProbability: 1.5
@@ -332,9 +334,6 @@ MonoBehaviour:
     StartSpeed: 13
     MaxSpeed: 28
     DifficultyRampTime: 100
-  magnetPowerUpPrefab: {fileID: 7738556558198575713, guid: 2be381f789caf5945a356e4771772c7b, type: 3}
-  shieldPowerUpPrefab: {fileID: 182443155150489425, guid: 8e5ebeb1e42825a4cba8df7da2393e19, type: 3}
-  doubleScorePowerUpPrefab: {fileID: 8848292279444953440, guid: f42db8eb739fcab45979cd8b9846652e, type: 3}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0

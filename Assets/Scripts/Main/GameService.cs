@@ -3,6 +3,7 @@ using DodoRun.Event;
 using DodoRun.Obstacle;
 using DodoRun.Platform;
 using DodoRun.Player;
+using DodoRun.PowerUps;
 using DodoRun.Utilities;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ namespace DodoRun.Main
         public EventService EventService { get; private set; }
         public ObstacleService ObstacleService { get; private set; }
         public CoinService CoinService { get; private set; }
+        public PowerupService PowerupService { get; private set; }
         public DifficultyManager Difficulty { get; private set; }
 
         public bool IsGameRunning { get; private set; } = true;
@@ -31,6 +33,10 @@ namespace DodoRun.Main
         [Header("Coin Settings")]
         [SerializeField] private CoinView coinPrefab;
         [SerializeField] private float coinBaseVerticalOffset = 0.5f;
+
+        [Header("Powerup Settings")]
+        [SerializeField] private PowerupView magnetPrefab;
+        [SerializeField] private PowerupView shieldPrefab;
 
         [Header("Difficulty Settings")]
         [SerializeField] private DifficultySettings difficultySettings = new DifficultySettings();
@@ -59,6 +65,11 @@ namespace DodoRun.Main
                 coinBaseVerticalOffset
             );
 
+            PowerupService = new PowerupService(
+                magnetPrefab,
+                shieldPrefab
+            );
+
             PlatformService = new PlatformService(
                 platformScriptableObject,
                 platformScriptableObject.spawnPosition
@@ -73,6 +84,7 @@ namespace DodoRun.Main
             PlayerService.UpdatePlayer();
 
             CoinService.UpdateCoins();
+            PowerupService.Update();
         }
 
         private void FixedUpdate()

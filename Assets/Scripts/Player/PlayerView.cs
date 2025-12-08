@@ -21,11 +21,15 @@ namespace DodoRun.Player
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.layer == deadlyObstacleLayer)
-            {
-                playerController.Die();
-                GameService.Instance.GameOver();
-            }
+            if (collision.gameObject.layer != deadlyObstacleLayer)
+                return;
+
+            var powerupService = GameService.Instance.PowerupService;
+            if (powerupService != null && powerupService.IsShieldActive)
+                return;
+
+            playerController.Die();
+            GameService.Instance.GameOver();
         }
 
         private void OnDrawGizmos()

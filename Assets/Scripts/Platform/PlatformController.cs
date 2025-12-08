@@ -2,6 +2,7 @@
 using DodoRun.Coin;
 using DodoRun.Main;
 using DodoRun.Obstacle;
+using DodoRun.PowerUps;
 using UnityEngine;
 
 namespace DodoRun.Platform
@@ -25,6 +26,7 @@ namespace DodoRun.Platform
         private const float SegmentLength = 10f;
         private int trainSegmentsLeft = 0;
         private int trainLane = 0;
+        private float nextGuaranteedPowerupZ = 0f;
 
         public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos, int index)
         {
@@ -100,8 +102,8 @@ namespace DodoRun.Platform
                     segmentZ
                 );
 
-                ObstacleType obstacleType = obstacleService.GetBalancedRandomObstacleType();
-                int lane = obstacleService.GetBalancedLane();
+                ObstacleType obstacleType;
+                int lane;
 
                 if (trainSegmentsLeft > 0)
                 {
@@ -156,6 +158,7 @@ namespace DodoRun.Platform
                 }
 
                 SpawnCoinsForSegment(obstacleType, lane, segmentBase, laneOffset);
+                TrySpawnPowerupSafe(obstacleType, lane, segmentBase, laneOffset);
             }
         }
 
@@ -222,6 +225,81 @@ namespace DodoRun.Platform
                     break;
             }
         }
+
+        private void TrySpawnPowerupSafe(ObstacleType obstacleType, int lane, Vector3 basePos, float laneOffset)
+        {
+            var powerupService = GameService.Instance.PowerupService;
+            if (powerupService == null)
+                return;
+
+            float playerZ = GameService.Instance.PlayerService.GetPlayerZ();
+
+            if (basePos.z < nextGuaranteedPowerupZ && Random.value > Mathf.Lerp(0.075f, 0.2f, GameService.Instance.Difficulty.Progress))
+                return;
+
+            if (IsLaneBlocked(lane, basePos, laneOffset))
+                return;
+
+            if (IsObstacleNearby(basePos, lane, laneOffset))
+                return;
+
+            float finalHeight = platformTransform.position.y + GameService.Instance.CoinService.BaseVerticalOffset + 0.35f;
+
+            Vector3 pos = new Vector3(
+                basePos.x + lane * laneOffset,
+                finalHeight,
+                basePos.z + 2.2f
+            );
+
+            PowerupType powerupType = Random.value < 0.6f ? PowerupType.Magnet : PowerupType.Shield;
+            powerupService.Spawn(powerupType, pos);
+
+            nextGuaranteedPowerupZ = playerZ + Random.Range(30f, 60f);
+        }
+
+
+        private bool IsLaneBlocked(int lane, Vector3 basePos, float laneOffset)
+        {
+            for (int i = 0; i < spawnedObstacles.Count; i++)
+            {
+                var obs = spawnedObstacles[i].ObstacleView;
+                if (obs == null) continue;
+
+                float dz = Mathf.Abs(obs.transform.position.z - basePos.z);
+                if (dz > 4f) continue;
+
+                float xDist = Mathf.Abs(obs.transform.position.x - (basePos.x + lane * laneOffset));
+                if (xDist < laneOffset * 0.6f)
+                    return true;
+            }
+
+            return false;
+        }
+
+
+        private bool IsObstacleNearby(Vector3 basePos, int lane, float laneOffset)
+        {
+            float safeRange = 6f;
+
+            for (int i = 0; i < spawnedObstacles.Count; i++)
+            {
+                var obs = spawnedObstacles[i].ObstacleView;
+                if (obs == null || !obs.gameObject.activeInHierarchy)
+                    continue;
+
+                float dz = Mathf.Abs(obs.transform.position.z - basePos.z);
+                if (dz > safeRange)
+                    continue;
+
+                float xDistance = Mathf.Abs(obs.transform.position.x - (basePos.x + lane * laneOffset));
+
+                if (xDistance < laneOffset * 0.6f)
+                    return true;
+            }
+
+            return false;
+        }
+
 
         private bool ShouldSpawnCoinsForEmptySegment()
         {

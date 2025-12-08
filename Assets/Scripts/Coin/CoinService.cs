@@ -15,6 +15,8 @@ namespace DodoRun.Coin
         private Transform playerTransform;
         private readonly float despawnDistance = 5f;
 
+        public IReadOnlyList<CoinController> ActiveCoins => activeCoins;
+
         public CoinService(CoinView coinPrefab, float verticalOffset)
         {
             CoinPrefab = coinPrefab;

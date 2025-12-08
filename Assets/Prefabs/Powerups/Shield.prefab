@@ -96,7 +96,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8586550650838468465}
   - component: {fileID: 7875298597125945746}
-  - component: {fileID: 182443155150489425}
+  - component: {fileID: 8707343121001148180}
   m_Layer: 0
   m_Name: Shield
   m_TagString: Untagged
@@ -141,7 +141,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &182443155150489425
+--- !u!114 &8707343121001148180
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -150,8 +150,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8962830654904475083}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7831cca97e8b3ab4484eb26fcbaf4781, type: 3}
+  m_Script: {fileID: 11500000, guid: 31d75daad0698ca498c990c2aa69bd29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
-  duration: 8

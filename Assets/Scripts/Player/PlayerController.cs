@@ -1,4 +1,5 @@
-﻿using DodoRun.Main;
+﻿using DodoRun.Coin;
+using DodoRun.Main;
 using System.Collections;
 using UnityEngine;
 
@@ -80,6 +81,9 @@ namespace DodoRun.Player
         {
             HandleSwipeInputs();
             stateMachine.Update();
+
+            if (GameService.Instance.PowerupService != null && GameService.Instance.PowerupService.IsMagnetActive)
+                AttractCoins();
 
             float speedMultiplier = Mathf.Lerp(1f, 1.75f, gameService.Difficulty.Progress);
 
@@ -214,6 +218,39 @@ namespace DodoRun.Player
         }
 
         bool IsGroundedSafe() => Time.time - lastGroundedTime < 0.05f;
+
+        private void AttractCoins()
+        {
+            var coins = GameService.Instance.CoinService.ActiveCoins;
+            float range = GameService.Instance.PowerupService.MagnetRange;
+
+            Vector3 magnetTarget = playerTransform.position + new Vector3(0f, .5f, 1.5f);
+
+            for (int i = 0; i < coins.Count; i++)
+            {
+                var controller = coins[i];
+                if (!controller.IsUsed()) continue;
+
+                var view = controller.CoinView;
+                if (!view.gameObject.activeInHierarchy) continue;
+
+                float dz = view.transform.position.z - playerTransform.position.z;
+                float dx = Mathf.Abs(view.transform.position.x - playerTransform.position.x);
+
+                if (dz < -0.5f || dz > range)
+                    continue;
+
+                if (dx > 4f)
+                    continue;
+
+                view.transform.position = Vector3.Lerp(
+                    view.transform.position,
+                    magnetTarget,
+                    Time.deltaTime * 10f
+                );
+            }
+        }
+
 
         public IEnumerator DoSubwayJump()
         {
