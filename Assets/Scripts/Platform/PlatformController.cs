@@ -26,7 +26,9 @@ namespace DodoRun.Platform
         private const float SegmentLength = 10f;
         private int trainSegmentsLeft = 0;
         private int trainLane = 0;
-        private float nextGuaranteedPowerupZ = 0f;
+
+        private static int segmentCounter = 0;
+        private static int nextPowerupSegment = 5;
 
         public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos, int index)
         {
@@ -232,29 +234,54 @@ namespace DodoRun.Platform
             if (powerupService == null)
                 return;
 
-            float playerZ = GameService.Instance.PlayerService.GetPlayerZ();
+            float difficulty = GameService.Instance.Difficulty.Progress;
 
-            if (basePos.z < nextGuaranteedPowerupZ && Random.value > Mathf.Lerp(0.075f, 0.2f, GameService.Instance.Difficulty.Progress))
+            segmentCounter++;
+
+            if (segmentCounter < nextPowerupSegment)
                 return;
 
-            if (IsLaneBlocked(lane, basePos, laneOffset))
+            int selectedLane = lane;
+            bool laneOk = !IsLaneBlocked(selectedLane, basePos, laneOffset) &&
+                          !IsObstacleNearby(basePos, selectedLane, laneOffset);
+
+            if (!laneOk)
+            {
+                for (int l = -1; l <= 1; l++)
+                {
+                    if (!IsLaneBlocked(l, basePos, laneOffset) &&
+                        !IsObstacleNearby(basePos, l, laneOffset))
+                    {
+                        selectedLane = l;
+                        laneOk = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!laneOk)
                 return;
 
-            if (IsObstacleNearby(basePos, lane, laneOffset))
-                return;
+            float heightOffset = 0.55f;
 
-            float finalHeight = platformTransform.position.y + GameService.Instance.CoinService.BaseVerticalOffset + 0.35f;
+            float finalHeight = platformTransform.position.y +
+                                GameService.Instance.CoinService.BaseVerticalOffset +
+                                heightOffset;
 
             Vector3 pos = new Vector3(
-                basePos.x + lane * laneOffset,
+                basePos.x + selectedLane * laneOffset,
                 finalHeight,
                 basePos.z + 2.2f
             );
 
-            PowerupType powerupType = Random.value < 0.6f ? PowerupType.Magnet : PowerupType.Shield;
-            powerupService.Spawn(powerupType, pos);
+            PowerupType type = Random.value < 0.6f ? PowerupType.Magnet : PowerupType.Shield;
+            powerupService.Spawn(type, pos);
 
-            nextGuaranteedPowerupZ = playerZ + Random.Range(30f, 60f);
+            segmentCounter = 0;
+
+            int minSeg = Mathf.RoundToInt(Mathf.Lerp(8f, 4f, difficulty));
+            int maxSeg = Mathf.RoundToInt(Mathf.Lerp(14f, 6f, difficulty));
+            nextPowerupSegment = Random.Range(minSeg, maxSeg + 1);
         }
 
 
@@ -275,7 +302,6 @@ namespace DodoRun.Platform
 
             return false;
         }
-
 
         private bool IsObstacleNearby(Vector3 basePos, int lane, float laneOffset)
         {
@@ -299,7 +325,6 @@ namespace DodoRun.Platform
 
             return false;
         }
-
 
         private bool ShouldSpawnCoinsForEmptySegment()
         {

@@ -224,6 +224,9 @@ namespace DodoRun.Player
             var coins = GameService.Instance.CoinService.ActiveCoins;
             float range = GameService.Instance.PowerupService.MagnetRange;
 
+            float speed = GameService.Instance.Difficulty.CurrentSpeed;
+            float pullSpeed = Mathf.Lerp(12f, 35f, speed / 30f);
+
             Vector3 magnetTarget = playerTransform.position + new Vector3(0f, .5f, 1.5f);
 
             for (int i = 0; i < coins.Count; i++)
@@ -237,17 +240,23 @@ namespace DodoRun.Player
                 float dz = view.transform.position.z - playerTransform.position.z;
                 float dx = Mathf.Abs(view.transform.position.x - playerTransform.position.x);
 
-                if (dz < -0.5f || dz > range)
-                    continue;
+                if (dz < -1f || dz > range) continue;
+                if (dx > 4f) continue;
 
-                if (dx > 4f)
-                    continue;
+                if (view.transform.parent != null)
+                    view.transform.SetParent(null);
 
+                // Move coin
                 view.transform.position = Vector3.Lerp(
                     view.transform.position,
                     magnetTarget,
-                    Time.deltaTime * 10f
+                    Time.deltaTime * pullSpeed
                 );
+
+                if (Vector3.Distance(view.transform.position, magnetTarget) < 0.25f)
+                {
+                    controller.CollectCoin();  
+                }
             }
         }
 
