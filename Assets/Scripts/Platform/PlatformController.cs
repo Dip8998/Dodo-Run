@@ -274,7 +274,13 @@ namespace DodoRun.Platform
                 basePos.z + 2.2f
             );
 
-            PowerupType type = Random.value < 0.6f ? PowerupType.Magnet : PowerupType.Shield;
+            float r = Random.value;
+
+            PowerupType type =
+                r < 0.5f ? PowerupType.Magnet :
+                r < 0.8f ? PowerupType.Shield :
+                          PowerupType.DoubleScore;
+
             powerupService.Spawn(type, pos);
 
             segmentCounter = 0;

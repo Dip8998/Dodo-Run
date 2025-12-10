@@ -8,6 +8,7 @@ namespace DodoRun.PowerUps
     {
         private readonly PowerupPool magnetPool;
         private readonly PowerupPool shieldPool;
+        private readonly PowerupPool doubleScorePool;
 
         private readonly List<PowerupController> active = new List<PowerupController>();
         private readonly Dictionary<PowerupType, float> activeTimers = new Dictionary<PowerupType, float>();
@@ -19,14 +20,18 @@ namespace DodoRun.PowerUps
 
         public bool IsMagnetActive => activeTimers.ContainsKey(PowerupType.Magnet);
         public bool IsShieldActive => activeTimers.ContainsKey(PowerupType.Shield);
+        public bool IsDoubleScoreActive => activeTimers.ContainsKey(PowerupType.DoubleScore);
 
-        public PowerupService(PowerupView magnet, PowerupView shield)
+        public PowerupService(PowerupView magnet, PowerupView shield, PowerupView doubleScore)
         {
             if (magnet != null)
                 magnetPool = new PowerupPool(magnet);
 
             if (shield != null)
                 shieldPool = new PowerupPool(shield);
+
+            if (doubleScore != null)
+                doubleScorePool = new PowerupPool(doubleScore);
         }
 
         public PowerupController Spawn(PowerupType type, Vector3 position)
@@ -39,6 +44,9 @@ namespace DodoRun.PowerUps
             else if (type == PowerupType.Shield && shieldPool != null)
                 controller = shieldPool.Get(type, position);
 
+            else if (type == PowerupType.DoubleScore && doubleScorePool != null)
+                controller = doubleScorePool.Get(type, position);
+
             if (controller != null)
                 active.Add(controller);
 
@@ -47,13 +55,18 @@ namespace DodoRun.PowerUps
 
         public void ReturnToPool(PowerupController controller)
         {
-            if (controller == null)
-                return;
+            if (controller == null) return;
 
             active.Remove(controller);
 
-            if (controller.Type == PowerupType.Magnet) magnetPool?.Return(controller);
-            else if (controller.Type == PowerupType.Shield) shieldPool?.Return(controller);
+            if (controller.Type == PowerupType.Magnet)
+                magnetPool?.Return(controller);
+
+            else if (controller.Type == PowerupType.Shield)
+                shieldPool?.Return(controller);
+
+            else if (controller.Type == PowerupType.DoubleScore)
+                doubleScorePool?.Return(controller);
         }
 
         public void ActivatePowerup(PowerupType type)
@@ -62,20 +75,25 @@ namespace DodoRun.PowerUps
             {
                 PowerupType.Magnet => 10f,
                 PowerupType.Shield => 12f,
+                PowerupType.DoubleScore => 10f,
                 _ => 8f
             };
 
             activeTimers[type] = Time.time + duration;
+
+            if (type == PowerupType.DoubleScore)
+                GameService.Instance.ScoreService.ActivateDoubleScore();
         }
 
         public void Update()
         {
-            if (!GameService.Instance.IsGameRunning) return;
+            if (!GameService.Instance.IsGameRunning)
+                return;
 
             if (player == null)
                 player = GameService.Instance.PlayerService.GetPlayerTransform();
-
             if (player == null) return;
+
 
             float speed = GameService.Instance.Difficulty.CurrentSpeed;
             Vector3 movement = new Vector3(0, 0, -speed * Time.deltaTime);
@@ -97,15 +115,25 @@ namespace DodoRun.PowerUps
                     controller.Deactivate();
             }
 
-            var toRemove = new List<PowerupType>();
+            var expired = new List<PowerupType>();
             foreach (var kvp in activeTimers)
             {
                 if (Time.time >= kvp.Value)
-                    toRemove.Add(kvp.Key);
+                    expired.Add(kvp.Key);
             }
 
-            foreach (var t in toRemove)
-                activeTimers.Remove(t);
+            foreach (var type in expired)
+            {
+                activeTimers.Remove(type);
+
+                if (type == PowerupType.DoubleScore)
+                    GameService.Instance.ScoreService.DeactivateDoubleScore();
+
+                if (type == PowerupType.Magnet)
+                    GameService.Instance.CoinService.ReleaseAllMagnetCoins();
+            }
+
         }
+
     }
 }

@@ -7,6 +7,7 @@ namespace DodoRun.Coin
     {
         public CoinView CoinView { get; private set; }
         private bool isUsed = true;
+        public bool IsBeingPulled = false;
 
         public CoinController(CoinView coinView, Vector3 spawnPos)
         {
@@ -32,6 +33,7 @@ namespace DodoRun.Coin
                 SetupView(coinView, spawnPos);
                 return;
             }
+            IsBeingPulled = false;
 
             CoinView.transform.position = spawnPos;
             CoinView.gameObject.SetActive(true);

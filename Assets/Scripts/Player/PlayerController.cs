@@ -221,43 +221,50 @@ namespace DodoRun.Player
 
         private void AttractCoins()
         {
+            if (!GameService.Instance.PowerupService.IsMagnetActive)
+                return;
+
             var coins = GameService.Instance.CoinService.ActiveCoins;
             float range = GameService.Instance.PowerupService.MagnetRange;
 
-            float speed = GameService.Instance.Difficulty.CurrentSpeed;
-            float pullSpeed = Mathf.Lerp(12f, 35f, speed / 30f);
-
-            Vector3 magnetTarget = playerTransform.position + new Vector3(0f, .5f, 1.5f);
+            Vector3 targetOffset = new Vector3(0f, 0.5f, 1.2f);
+            Vector3 magnetTarget = playerTransform.position + targetOffset;
 
             for (int i = 0; i < coins.Count; i++)
             {
-                var controller = coins[i];
-                if (!controller.IsUsed()) continue;
+                var c = coins[i];
+                if (!c.IsUsed()) continue;
 
-                var view = controller.CoinView;
-                if (!view.gameObject.activeInHierarchy) continue;
+                var view = c.CoinView;
+                if (view == null || !view.gameObject.activeSelf) continue;
 
                 float dz = view.transform.position.z - playerTransform.position.z;
-                float dx = Mathf.Abs(view.transform.position.x - playerTransform.position.x);
-
                 if (dz < -1f || dz > range) continue;
+
+                float dx = Mathf.Abs(view.transform.position.x - playerTransform.position.x);
                 if (dx > 4f) continue;
 
-                if (view.transform.parent != null)
-                    view.transform.SetParent(null);
+                c.IsBeingPulled = true;
 
-                // Move coin
                 view.transform.position = Vector3.Lerp(
                     view.transform.position,
                     magnetTarget,
-                    Time.deltaTime * pullSpeed
+                    Time.deltaTime * 12f
                 );
 
-                if (Vector3.Distance(view.transform.position, magnetTarget) < 0.25f)
+                if (Vector3.Distance(view.transform.position, playerTransform.position) < 0.55f)
                 {
-                    controller.CollectCoin();  
+                    c.CollectCoin();
                 }
             }
+        }
+
+        private bool IsCoinInMagnetRange(Transform coin)
+        {
+            float dz = coin.position.z - playerTransform.position.z;
+            float dx = Mathf.Abs(coin.position.x - playerTransform.position.x);
+
+            return dz > -0.5f && dz < GameService.Instance.PowerupService.MagnetRange && dx < 4f;
         }
 
 

@@ -80,5 +80,12 @@ namespace DodoRun.Coin
                 }
             }
         }
+
+        public void ReleaseAllMagnetCoins()
+        {
+            foreach (var c in ActiveCoins)
+                c.IsBeingPulled = false;
+        }
+
     }
 }

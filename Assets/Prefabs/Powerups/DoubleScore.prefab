@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 3347785213430787193}
   - component: {fileID: 4670485896328238754}
   - component: {fileID: 7542546153173029771}
-  - component: {fileID: 8848292279444953440}
   - component: {fileID: 9191877895800643348}
+  - component: {fileID: 5709027787372200936}
   m_Layer: 0
   m_Name: DoubleScore
   m_TagString: Untagged
@@ -90,20 +90,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &8848292279444953440
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 912082014760633931}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7831cca97e8b3ab4484eb26fcbaf4781, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  type: 2
-  duration: 8
 --- !u!65 &9191877895800643348
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -125,6 +111,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5709027787372200936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912082014760633931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31d75daad0698ca498c990c2aa69bd29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1490508561089054163
 GameObject:
   m_ObjectHideFlags: 0

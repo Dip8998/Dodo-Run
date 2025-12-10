@@ -4,6 +4,7 @@
     {
         None = 0,
         Magnet = 1,
-        Shield = 2
+        Shield = 2,
+        DoubleScore = 3
     }
 }

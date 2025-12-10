@@ -4,7 +4,9 @@ using DodoRun.Obstacle;
 using DodoRun.Platform;
 using DodoRun.Player;
 using DodoRun.PowerUps;
+using DodoRun.Score;
 using DodoRun.Utilities;
+using TMPro;
 using UnityEngine;
 
 namespace DodoRun.Main
@@ -17,6 +19,7 @@ namespace DodoRun.Main
         public ObstacleService ObstacleService { get; private set; }
         public CoinService CoinService { get; private set; }
         public PowerupService PowerupService { get; private set; }
+        public ScoreService ScoreService { get; private set; }
         public DifficultyManager Difficulty { get; private set; }
 
         public bool IsGameRunning { get; private set; } = true;
@@ -37,9 +40,14 @@ namespace DodoRun.Main
         [Header("Powerup Settings")]
         [SerializeField] private PowerupView magnetPrefab;
         [SerializeField] private PowerupView shieldPrefab;
+        [SerializeField] private PowerupView doubleScorePrefab;
 
         [Header("Difficulty Settings")]
         [SerializeField] private DifficultySettings difficultySettings = new DifficultySettings();
+
+        [Header("UI")]
+        [SerializeField] private TextMeshProUGUI scoreUIText;
+        [SerializeField] private TextMeshProUGUI multiplierTextUI;
 
         protected override void Awake()
         {
@@ -52,6 +60,10 @@ namespace DodoRun.Main
             PlayerService = new PlayerService(playerScriptableObject);
 
             Difficulty = new DifficultyManager(difficultySettings);
+
+            ScoreService = new ScoreService();
+            ScoreService.Initialize(scoreUIText, multiplierTextUI);
+
 
             ObstacleService = new ObstacleService(
                 jumpObstaclePrefab,
@@ -67,7 +79,8 @@ namespace DodoRun.Main
 
             PowerupService = new PowerupService(
                 magnetPrefab,
-                shieldPrefab
+                shieldPrefab,
+                doubleScorePrefab
             );
 
             PlatformService = new PlatformService(
@@ -85,6 +98,7 @@ namespace DodoRun.Main
 
             CoinService.UpdateCoins();
             PowerupService.Update();
+            ScoreService.Update();
         }
 
         private void FixedUpdate()
