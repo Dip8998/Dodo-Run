@@ -1,5 +1,6 @@
 ﻿using DodoRun.Coin;
 using DodoRun.Event;
+using DodoRun.Main;
 using DodoRun.Obstacle;
 using DodoRun.Platform;
 using DodoRun.Player;

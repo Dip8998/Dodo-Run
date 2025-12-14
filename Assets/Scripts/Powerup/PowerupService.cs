@@ -74,12 +74,13 @@ namespace DodoRun.PowerUps
             float duration = type switch
             {
                 PowerupType.Magnet => 10f,
-                PowerupType.Shield => 12f,
+                PowerupType.Shield => 10f,
                 PowerupType.DoubleScore => 10f,
                 _ => 8f
             };
 
             activeTimers[type] = Time.time + duration;
+            GameService.Instance.EventService.OnPowerupActivated.InvokeEvent(type, duration);
 
             if (type == PowerupType.DoubleScore)
                 GameService.Instance.ScoreService.ActivateDoubleScore();
@@ -124,6 +125,7 @@ namespace DodoRun.PowerUps
 
             foreach (var type in expired)
             {
+                GameService.Instance.EventService.OnPowerupExpired.InvokeEvent(type);   
                 activeTimers.Remove(type);
 
                 if (type == PowerupType.DoubleScore)

@@ -1,14 +1,19 @@
-﻿using UnityEngine;
+﻿using DodoRun.PowerUps;
+using UnityEngine;
 
 namespace DodoRun.Event
 {
     public class EventService
     {
         public EventController<Transform> OnPlayerSpawned {  get; private set; }
+        public EventController<PowerupType, float> OnPowerupActivated;
+        public EventController<PowerupType> OnPowerupExpired;
 
         public EventService()
         {
             OnPlayerSpawned = new EventController<Transform>();
+            OnPowerupActivated = new EventController<PowerupType, float>();
+            OnPowerupExpired = new EventController<PowerupType>();
         }
     }
 }
