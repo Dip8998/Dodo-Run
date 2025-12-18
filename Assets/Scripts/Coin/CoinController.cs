@@ -23,8 +23,15 @@ namespace DodoRun.Coin
 
         public void CollectCoin()
         {
+            int value = 1;
+
+            GameService.Instance.ScoreService.AddCoinScore(10);
+            GameService.Instance.ScoreService.AddCoins(value);
+            GameService.Instance.EventService.OnCoinCollected.InvokeEvent(value);
+
             Deactivate();
         }
+
 
         public void ResetCoin(CoinView coinView, Vector3 spawnPos)
         {

@@ -6,6 +6,7 @@ using DodoRun.Platform;
 using DodoRun.Player;
 using DodoRun.PowerUps;
 using DodoRun.Score;
+using DodoRun.Tutorial;
 using DodoRun.Utilities;
 using TMPro;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace DodoRun.Main
         public CoinService CoinService { get; private set; }
         public PowerupService PowerupService { get; private set; }
         public ScoreService ScoreService { get; private set; }
+        public TutorialService TutorialService { get; private set; }
         public DifficultyManager Difficulty { get; private set; }
 
         public bool IsGameRunning { get; private set; } = true;
@@ -65,7 +67,6 @@ namespace DodoRun.Main
             ScoreService = new ScoreService();
             ScoreService.Initialize(scoreUIText, multiplierTextUI);
 
-
             ObstacleService = new ObstacleService(
                 jumpObstaclePrefab,
                 slideObstaclePrefab,
@@ -84,6 +85,9 @@ namespace DodoRun.Main
                 doubleScorePrefab
             );
 
+            TutorialService = new TutorialService();
+            TutorialService.StartTutorial();
+
             PlatformService = new PlatformService(
                 platformScriptableObject,
                 platformScriptableObject.spawnPosition
@@ -100,6 +104,7 @@ namespace DodoRun.Main
             CoinService.UpdateCoins();
             PowerupService.Update();
             ScoreService.Update();
+            TutorialService?.UpdateTutorial();
         }
 
         private void FixedUpdate()

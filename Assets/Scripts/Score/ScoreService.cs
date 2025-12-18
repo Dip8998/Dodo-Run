@@ -16,7 +16,10 @@ namespace DodoRun.Score
         private int multiplier = 1;
         private float multiplierTimer = 0f;
 
-        public int TotalScore => Mathf.FloorToInt(distanceScore);
+        public int TotalScore => Mathf.FloorToInt(distanceScore) + coinScore;
+        private int coinScore;
+        private int collectedCoins;
+        public int CollectedCoins => collectedCoins;
 
         public void Initialize(TextMeshProUGUI scoreUI, TextMeshProUGUI multiplierUI)
         {
@@ -46,6 +49,16 @@ namespace DodoRun.Score
             UpdateUI();
         }
 
+        public void AddCoinScore(int amount)
+        {
+            coinScore += amount;
+            UpdateUI();
+        }
+
+        public void AddCoins(int amount)
+        {
+            collectedCoins += amount;
+        }
 
         private void UpdateMultiplierTimer()
         {
@@ -80,7 +93,7 @@ namespace DodoRun.Score
             distanceScore = 0;
             multiplier = 1;
             multiplierTimer = 0;
-
+            coinScore = 0;
             UpdateUI();
         }
 

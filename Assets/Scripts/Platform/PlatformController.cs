@@ -3,6 +3,7 @@ using DodoRun.Coin;
 using DodoRun.Main;
 using DodoRun.Obstacle;
 using DodoRun.PowerUps;
+using DodoRun.Tutorial;
 using UnityEngine;
 
 namespace DodoRun.Platform
@@ -44,6 +45,11 @@ namespace DodoRun.Platform
             rigidbody = PlatformView.GetComponent<Rigidbody>();
             platformCollider = PlatformView.GetComponent<Collider>();
             PlatformView.SetController(this);
+
+            var tutorial = GameService.Instance.TutorialService;
+            if (tutorial != null && tutorial.IsActive)
+                return;
+
 
             SpawnObstaclesAndCoinsProcedural();
         }
@@ -474,6 +480,10 @@ namespace DodoRun.Platform
 
             platformCollider.enabled = true;
 
+            var tutorial = GameService.Instance.TutorialService;
+            if (tutorial != null && tutorial.IsActive)
+                return;
+
             SpawnObstaclesAndCoinsProcedural();
         }
 
@@ -522,5 +532,33 @@ namespace DodoRun.Platform
                 PlatformView.gameObject.SetActive(false);
             }
         }
+
+        public ObstacleController SpawnTutorialObstacle(
+            ObstacleType type,
+            int lane,
+            Vector3 basePos,
+            float laneOffset)
+        {
+            ObstacleController obstacle =
+                GameService.Instance.ObstacleService.SpawnObstacle(
+                    type,
+                    lane,
+                    basePos,
+                    laneOffset
+                );
+
+            if (obstacle != null)
+                spawnedObstacles.Add(obstacle);
+
+            return obstacle;
+        }
+
+        public void SpawnTutorialCoin(Vector3 pos)
+        {
+            CoinController coin = GameService.Instance.CoinService.GetCoin(pos);
+            coin.CoinView.transform.SetParent(platformTransform);
+            spawnedCoins.Add(coin);
+        }
+
     }
 }

@@ -12,11 +12,6 @@ namespace DodoRun.Coin
         public CoinPool(CoinView coinPrefab, int initialCount = 10)
         {
             this.coinPrefab = coinPrefab;
-
-            for (int i = 0; i < initialCount; i++)
-            {
-                CreateNewCoin(Vector3.zero);
-            }
         }
 
         public CoinController GetCoin(Vector3 spawnPos)

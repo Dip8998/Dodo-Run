@@ -1,5 +1,6 @@
 ﻿using DodoRun.Coin;
 using DodoRun.Main;
+using DodoRun.Tutorial;
 using System.Collections;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace DodoRun.Player
         public Rigidbody Rigidbody { get; private set; }
         public CapsuleCollider CapsuleCollider { get; private set; }
         public Animator PlayerAnimator { get; private set; }
+        public PlayerView PlayerView { get; private set; }
 
         public int CurrentLane { get; set; } = 0;
         public bool IsGrounded { get; private set; }
@@ -22,7 +24,6 @@ namespace DodoRun.Player
         public float SlideDuration { get; private set; } = 0.75f;
 
         private PlayerStateMachine stateMachine;
-        private PlayerView playerView;
         private Transform playerTransform;
         private Transform groundCheckTransform;
 
@@ -55,15 +56,15 @@ namespace DodoRun.Player
 
         private void SetupView()
         {
-            playerView = Object.Instantiate(PlayerScriptableObject.Player, PlayerScriptableObject.SpawnPosition, Quaternion.identity);
-            playerView.SetController(this);
+            PlayerView = Object.Instantiate(PlayerScriptableObject.Player, PlayerScriptableObject.SpawnPosition, Quaternion.identity);
+            PlayerView.SetController(this);
 
-            Rigidbody = playerView.GetComponent<Rigidbody>();
-            CapsuleCollider = playerView.GetComponent<CapsuleCollider>();
-            PlayerAnimator = playerView.GetComponent<Animator>();
+            Rigidbody = PlayerView.GetComponent<Rigidbody>();
+            CapsuleCollider = PlayerView.GetComponent<CapsuleCollider>();
+            PlayerAnimator = PlayerView.GetComponent<Animator>();
 
             playerTransform = Rigidbody.transform;
-            groundCheckTransform = playerView.GroundCheckPosition;
+            groundCheckTransform = PlayerView.GroundCheckPosition;
 
             OriginalHeight = CapsuleCollider.height;
             OriginalCenterY = CapsuleCollider.center.y;
@@ -178,7 +179,12 @@ namespace DodoRun.Player
             if (speed < minSwipeSpeed) return;
 
             Vector2 direction = diff.normalized;
-
+            var tutorial = gameService.TutorialService;
+            if (tutorial != null && tutorial.IsActive)
+            {
+                if (!tutorial.CanProcessSwipe(direction))
+                    return;
+            }
             bool inputConsumed = false;
 
             if (Vector2.Dot(direction, Vector2.right) > directionThreshold)
@@ -207,6 +213,11 @@ namespace DodoRun.Player
                 CanAcceptInput = false;
                 gameService.StartCoroutine(InputCooldown(0.1f));
             }
+        }
+
+        public void ForceLane(int lane)
+        {
+            CurrentLane = lane;
         }
 
         private IEnumerator InputCooldown(float duration)

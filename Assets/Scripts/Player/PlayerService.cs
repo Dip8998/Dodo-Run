@@ -19,5 +19,10 @@ namespace DodoRun.Player
 
         public Transform GetPlayerTransform() =>
             playerController?.Rigidbody?.transform;
+
+        public PlayerController GetPlayerController()
+        {
+            return playerController;
+        }
     }
 }
