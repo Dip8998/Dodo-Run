@@ -16,6 +16,7 @@ namespace DodoRun.Obstacle
         private readonly Queue<ObstacleType> lastObstacleHistory = new Queue<ObstacleType>();
         private readonly Queue<int> lastLaneHistory = new Queue<int>();
         private const int historyLimit = 3;
+        private readonly List<ObstacleController> activeObstacles = new();
 
         private readonly System.Random rng = new System.Random(); 
 
@@ -50,13 +51,20 @@ namespace DodoRun.Obstacle
                 basePos.z
             );
 
-            return obstaclePool.GetObstacle(prefab, spawnPos, null);
+            ObstacleController controller =
+                obstaclePool.GetObstacle(prefab, spawnPos, null);
+
+            activeObstacles.Add(controller);
+
+            return controller;
         }
 
         public void ReturnObstacleToPool(ObstacleController controller)
         {
-            if (controller != null)
-                obstaclePool.ReturnObstacleToPool(controller);
+            if (controller == null) return;
+
+            activeObstacles.Remove(controller);
+            obstaclePool.ReturnObstacleToPool(controller);
         }
 
         public ObstacleType GetBalancedRandomObstacleType()
@@ -150,5 +158,22 @@ namespace DodoRun.Obstacle
                 _ => null
             };
         }
+
+        public void DisableAllObstacleCollisions()
+        {
+            for (int i = 0; i < activeObstacles.Count; i++)
+            {
+                activeObstacles[i].SetCollisionEnabled(false);
+            }
+        }
+
+        public void EnableAllObstacleCollisions()
+        {
+            for (int i = 0; i < activeObstacles.Count; i++)
+            {
+                activeObstacles[i].SetCollisionEnabled(true);
+            }
+        }
+
     }
 }

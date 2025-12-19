@@ -1,49 +1,39 @@
-﻿using DodoRun.Interfaces;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using DodoRun.Interfaces;
 
 namespace DodoRun.Player
 {
-    public class PlayerStateMachine
+    public sealed class PlayerStateMachine
     {
-        private PlayerController Owner;
+        private readonly PlayerController owner;
         public IPlayerState CurrentState { get; private set; }
 
-        private readonly Dictionary<PlayerState, IPlayerState> States = new();
+        private readonly Dictionary<PlayerState, IPlayerState> states = new();
 
         public PlayerStateMachine(PlayerController owner)
         {
-            Owner = owner;
-            CreateState();
-            AssignOwner();
+            this.owner = owner;
+
+            states[PlayerState.RUNNING] = new PlayerRunningState(this);
+            states[PlayerState.LEFT_SWIPE] = new PlayerLeftSwipeState(this);
+            states[PlayerState.RIGHT_SWIPE] = new PlayerRightSwipeState(this);
+            states[PlayerState.JUMP] = new PlayerJumpState(this);
+            states[PlayerState.ROLLING] = new PlayerRollingState(this);
+            states[PlayerState.DEAD] = new PlayerDeadState(this);
+
+            foreach (var s in states.Values)
+                s.Owner = owner;
 
             ChangeState(PlayerState.RUNNING);
         }
 
-        private void AssignOwner()
-        {
-            foreach (var state in States.Values)
-                state.Owner = Owner;
-        }
-
-        private void CreateState()
-        {
-            States.Add(PlayerState.RUNNING, new PlayerRunningState(this));
-            States.Add(PlayerState.LEFT_SWIPE, new PlayerLeftSwipeState(this));
-            States.Add(PlayerState.RIGHT_SWIPE, new PlayerRightSwipeState(this));
-            States.Add(PlayerState.JUMP, new PlayerJumpState(this));
-            States.Add(PlayerState.ROLLING, new PlayerRollingState(this));
-            States.Add(PlayerState.DEAD, new PlayerDeadState(this));
-        }
-
         public void Update() => CurrentState?.Update();
 
-        protected void ChangeState(IPlayerState newState)
+        public void ChangeState(PlayerState state)
         {
             CurrentState?.OnStateExit();
-            CurrentState = newState;
-            CurrentState?.OnStateEnter();
+            CurrentState = states[state];
+            CurrentState.OnStateEnter();
         }
-
-        public void ChangeState(PlayerState state) => ChangeState(States[state]);
     }
 }

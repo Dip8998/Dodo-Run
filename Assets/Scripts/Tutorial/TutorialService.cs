@@ -1,161 +1,155 @@
-﻿using DodoRun.Main;
+﻿using UnityEngine;
+using DodoRun.Main;
 using DodoRun.Player;
 using DodoRun.PowerUps;
-using UnityEngine;
 
 namespace DodoRun.Tutorial
 {
-    public class TutorialService
+    public sealed class TutorialService
     {
         public bool IsActive { get; private set; } = true;
         public TutorialState CurrentState { get; private set; }
         public PowerupType ActiveTutorialPowerup { get; private set; }
 
         private GameService game;
+        private PlayerController player;
         private TutorialInputGate inputGate;
         private TutorialSpawner spawner;
-        private float timer;
-        private bool stepSpawned;
 
-        private PlayerController player;
+        private float timer;
+        private bool hasSpawnedForState;
 
         public void StartTutorial()
         {
             game = GameService.Instance;
-
             player = game.PlayerService.GetPlayerController();
 
             inputGate = new TutorialInputGate(player);
             spawner = new TutorialSpawner(game);
 
-            CurrentState = TutorialState.Welcome;
-            timer = 0f;
+            EnterState(TutorialState.Welcome);
         }
 
         public void UpdateTutorial()
         {
-            if (!IsActive) return;
+            if (!IsActive)
+                return;
 
             timer += Time.deltaTime;
 
             switch (CurrentState)
             {
                 case TutorialState.Welcome:
-                    HandleWelcome();
+                    if (timer >= 7f)
+                        EnterState(TutorialState.TrainSwipe);
                     break;
 
                 case TutorialState.TrainSwipe:
-                    HandleTrain();
+                    SpawnOnce(() =>
+                        spawner.SpawnTrain(SpawnAhead(28f))
+                    );
+
+                    if (timer >= 7f)
+                        EnterState(TutorialState.JumpOnly);
                     break;
 
-                case TutorialState.JumpOrSlide:
-                    HandleJumpSlide();
+                case TutorialState.JumpOnly:
+                    SpawnOnce(() =>
+                        spawner.SpawnJumpOnly(SpawnAhead(28f))
+                    );
+
+                    if (timer >= 7f)
+                        EnterState(TutorialState.SlideOnly);
+                    break;
+
+                case TutorialState.SlideOnly:
+                    SpawnOnce(() =>
+                        spawner.SpawnSlideOnly(SpawnAhead(28f))
+                    );
+
+                    if (timer >= 7f)
+                        EnterState(TutorialState.CoinTrail);
                     break;
 
                 case TutorialState.CoinTrail:
-                    HandleCoin();
+                    SpawnOnce(() =>
+                        spawner.SpawnCoinTrail(SpawnAhead(25f))
+                    );
+
+                    if (timer >= 7f)
+                        EnterState(TutorialState.MagnetIntro);
                     break;
 
                 case TutorialState.MagnetIntro:
-                    HandleMagnet();
+                    SpawnOnce(() =>
+                        ActiveTutorialPowerup =
+                            spawner.SpawnRandomPowerupTutorial(SpawnAhead(28f))
+                    );
+
+                    if (timer >= 7f)
+                        EndTutorial();
                     break;
             }
         }
 
-        private void HandleWelcome()
+        private void EnterState(TutorialState state)
         {
-            inputGate.LockAll();
+            CurrentState = state;
+            timer = 0f;
+            hasSpawnedForState = false;
 
-            if (timer >= 7f)
+            switch (state)
             {
-                stepSpawned = false;
-                timer = 0f;
-                CurrentState = TutorialState.TrainSwipe;
+                case TutorialState.Welcome:
+                    inputGate.LockAll();
+                    break;
 
-                inputGate.EnableSwipeOnly();
+                case TutorialState.TrainSwipe:
+                    inputGate.EnableSwipeOnly();
+                    break;
+
+                case TutorialState.JumpOnly:
+                    inputGate.EnableAll();
+                    break;
+
+                case TutorialState.SlideOnly:
+                    inputGate.EnableAll();
+                    break;
             }
         }
 
-        private void HandleTrain()
+        private void SpawnOnce(System.Action action)
         {
-            if (!stepSpawned)
-            {
-                spawner.SpawnTrain(player.PlayerView.transform.position + Vector3.forward * 28f);
-                stepSpawned = true;
-            }
+            if (hasSpawnedForState)
+                return;
 
-            if (timer >= 7f)
-            {
-                stepSpawned = false;
-                timer = 0f;
-                CurrentState = TutorialState.JumpOrSlide;
-                inputGate.EnableAll();
-            }
+            action.Invoke();
+            hasSpawnedForState = true;
         }
 
-        private void HandleJumpSlide()
+        private Vector3 SpawnAhead(float zOffset)
         {
-            if (!stepSpawned)
-            {
-                spawner.SpawnJumpOrSlide(player.PlayerView.transform.position + Vector3.forward * 28f);
-                stepSpawned = true;
-            }
-
-            if (timer >= 7f)
-            {
-                stepSpawned = false;
-                timer = 0f;
-                CurrentState = TutorialState.CoinTrail;
-            }
-        }
-
-        private void HandleCoin()
-        {
-            if (!stepSpawned)
-            {
-                spawner.SpawnCoinTrail(player.PlayerView.transform.position + Vector3.forward * 25f);
-                stepSpawned = true;
-            }
-
-            if (timer >= 7f)
-            {
-                stepSpawned = false;
-                timer = 0f;
-                CurrentState = TutorialState.MagnetIntro;
-            }
-        }
-
-        private void HandleMagnet()
-        {
-            if (!stepSpawned)
-            {
-                ActiveTutorialPowerup = spawner.SpawnRandomPowerupTutorial(player.PlayerView.transform.position + Vector3.forward * 28f);
-                stepSpawned = true;
-            }
-
-            if (timer >= 7f)
-            {
-                EndTutorial();
-            }
+            return player.PlayerView.transform.position + Vector3.forward * zOffset;
         }
 
         private void EndTutorial()
         {
             IsActive = false;
             CurrentState = TutorialState.Finished;
+            inputGate.EnableAll();
         }
 
         public bool CanProcessSwipe(Vector2 direction)
         {
-            if (!IsActive) return true;
+            if (!IsActive)
+                return true;
 
             if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
                 return inputGate.AllowLeftRight;
 
-            if (direction.y > 0)
-                return inputGate.AllowJump;
-
-            return inputGate.AllowSlide;
+            return direction.y > 0
+                ? inputGate.AllowJump
+                : inputGate.AllowSlide;
         }
     }
 }

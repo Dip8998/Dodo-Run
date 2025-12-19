@@ -4,49 +4,35 @@ using DodoRun.PowerUps;
 
 namespace DodoRun.Player
 {
-    public class PlayerShieldController : MonoBehaviour
+    public sealed class PlayerShieldController : MonoBehaviour
     {
         [SerializeField] private GameObject shieldObject;
 
         private void Start()
         {
-            if (shieldObject != null)
-                shieldObject.SetActive(false);
+            shieldObject.SetActive(false);
 
-            GameService.Instance.EventService.OnPowerupActivated
-                .AddListner(OnPowerupActivated);
-
-            GameService.Instance.EventService.OnPowerupExpired
-                .AddListner(OnPowerupExpired);
+            GameService.Instance.EventService.OnPowerupActivated.AddListner(OnActivated);
+            GameService.Instance.EventService.OnPowerupExpired.AddListner(OnExpired);
         }
 
         private void OnDestroy()
         {
-            if (GameService.Instance == null)
-                return;
+            if (GameService.Instance == null) return;
 
-            GameService.Instance.EventService.OnPowerupActivated
-                .RemoveListner(OnPowerupActivated);
-
-            GameService.Instance.EventService.OnPowerupExpired
-                .RemoveListner(OnPowerupExpired);
+            GameService.Instance.EventService.OnPowerupActivated.RemoveListner(OnActivated);
+            GameService.Instance.EventService.OnPowerupExpired.RemoveListner(OnExpired);
         }
 
-        private void OnPowerupActivated(PowerupType type, float duration)
+        private void OnActivated(PowerupType type, float _)
         {
-            if (type != PowerupType.Shield)
-                return;
-
-            if (shieldObject != null)
+            if (type == PowerupType.Shield)
                 shieldObject.SetActive(true);
         }
 
-        private void OnPowerupExpired(PowerupType type)
+        private void OnExpired(PowerupType type)
         {
-            if (type != PowerupType.Shield)
-                return;
-
-            if (shieldObject != null)
+            if (type == PowerupType.Shield)
                 shieldObject.SetActive(false);
         }
     }

@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 
 namespace DodoRun.PowerUps
 {
-    public class PowerupPool
+    public sealed class PowerupPool
     {
-        private readonly List<PowerupController> all = new List<PowerupController>();
-        private readonly Stack<PowerupController> free = new Stack<PowerupController>();
+        private readonly Stack<PowerupController> free = new();
         private readonly PowerupView prefab;
 
         public PowerupPool(PowerupView prefab)
@@ -14,24 +12,21 @@ namespace DodoRun.PowerUps
             this.prefab = prefab;
         }
 
-        public PowerupController Get(PowerupType type, Vector3 position)
+        public PowerupController Get(PowerupType type, UnityEngine.Vector3 pos)
         {
             if (free.Count > 0)
             {
-                PowerupController controller = free.Pop();
-                controller.Reset(prefab, type, position);
+                var controller = free.Pop();
+                controller.Initialize(prefab, type, pos);
                 return controller;
             }
 
-            PowerupController created = new PowerupController(prefab, type, position);
-            all.Add(created);
-            return created;
+            return new PowerupController(prefab, type, pos);
         }
 
         public void Return(PowerupController controller)
         {
-            if (!free.Contains(controller))
-                free.Push(controller);
+            free.Push(controller);
         }
     }
 }

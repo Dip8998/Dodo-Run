@@ -1,25 +1,23 @@
-﻿using DodoRun.Player;
-using UnityEngine;
+﻿using UnityEngine;
+using DodoRun.Player;
 
 namespace DodoRun.Coin
 {
-    public class CoinView : MonoBehaviour
+    public sealed class CoinView : MonoBehaviour
     {
-        private CoinController coinController;
+        private CoinController controller;
 
         public void SetController(CoinController controller)
         {
-            coinController = controller;
+            this.controller = controller;
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            if (coinController == null) return;
+            if (controller == null) return;
 
             if (other.TryGetComponent<PlayerView>(out _))
-            {
-                coinController.CollectCoin();
-            }
+                controller.Collect();
         }
     }
 }

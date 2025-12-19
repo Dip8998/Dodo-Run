@@ -1,13 +1,12 @@
-﻿using DodoRun.Main;
+﻿using UnityEngine;
+using DodoRun.Main;
 using DodoRun.Obstacle;
-using DodoRun.Coin;
 using DodoRun.PowerUps;
 using DodoRun.Platform;
-using UnityEngine;
 
 namespace DodoRun.Tutorial
 {
-    public class TutorialSpawner
+    public sealed class TutorialSpawner
     {
         private readonly GameService game;
 
@@ -16,50 +15,67 @@ namespace DodoRun.Tutorial
             this.game = game;
         }
 
-        private PlatformController GetActivePlatform()
-        {
-            return game.PlatformService.GetLatestPlatform();
-        }
+        private PlatformController Platform =>
+            game.PlatformService.GetLatestPlatform();
 
         public void SpawnTrain(Vector3 basePos)
         {
-            PlatformController platform = GetActivePlatform();
+            var platform = Platform;
             if (platform == null) return;
 
-            float laneOffset = game.PlatformService.PlatformScriptableObject.LaneOffset;
-
-            Vector3 pos = basePos;
-            pos.y = platform.PlatformView.transform.position.y + 1.3f;
+            basePos.y = platform.PlatformView.transform.position.y + 1.3f;
 
             platform.SpawnTutorialObstacle(
                 ObstacleType.Train,
                 0,
-                pos,
-                laneOffset
+                basePos,
+                game.PlatformService.PlatformScriptableObject.LaneOffset
             );
         }
 
-        public void SpawnJumpOrSlide(Vector3 basePos)
+        public void SpawnJumpOnly(Vector3 basePos)
         {
-            PlatformController platform = GetActivePlatform();
+            PlatformController platform = Platform;
             if (platform == null) return;
 
             float laneOffset = game.PlatformService.PlatformScriptableObject.LaneOffset;
-            float platformY = platform.PlatformView.transform.position.y + 0.25f;
+            float yPos = platform.PlatformView.transform.position.y + 0.25f;
 
             basePos.x = platform.PlatformView.transform.position.x;
+            basePos.y = yPos;
 
             int[] lanes = { -1, 0, 1 };
 
             for (int i = 0; i < lanes.Length; i++)
             {
-                Vector3 pos = basePos;
-                pos.y = platformY;
-
                 platform.SpawnTutorialObstacle(
-                    ObstacleType.SlideOrJump,
+                    ObstacleType.JumpOnly,
                     lanes[i],
-                    pos,
+                    basePos,
+                    laneOffset
+                );
+            }
+        }
+
+        public void SpawnSlideOnly(Vector3 basePos)
+        {
+            PlatformController platform = Platform;
+            if (platform == null) return;
+
+            float laneOffset = game.PlatformService.PlatformScriptableObject.LaneOffset;
+            float yPos = platform.PlatformView.transform.position.y + 0.25f;
+
+            basePos.x = platform.PlatformView.transform.position.x;
+            basePos.y = yPos;
+
+            int[] lanes = { -1, 0, 1 };
+
+            for (int i = 0; i < lanes.Length; i++)
+            {
+                platform.SpawnTutorialObstacle(
+                    ObstacleType.SlideOnly,
+                    lanes[i],
+                    basePos,
                     laneOffset
                 );
             }
@@ -67,92 +83,87 @@ namespace DodoRun.Tutorial
 
         public void SpawnCoinTrail(Vector3 startPos, int count = 10)
         {
-            PlatformController platform = GetActivePlatform();
+            var platform = Platform;
             if (platform == null) return;
 
-            float baseY =
+            float y =
                 platform.PlatformView.transform.position.y +
                 game.CoinService.BaseVerticalOffset;
 
             for (int i = 0; i < count; i++)
             {
                 Vector3 pos = startPos + Vector3.forward * (i * 1.5f);
-                pos.y = baseY;
+                pos.y = y;
                 platform.SpawnTutorialCoin(pos);
             }
         }
 
         public PowerupType SpawnRandomPowerupTutorial(Vector3 basePos)
         {
-            PlatformController platform = GetActivePlatform();
+            var platform = Platform;
             if (platform == null) return PowerupType.None;
 
             basePos.x = platform.PlatformView.transform.position.x;
 
             float laneOffset = game.PlatformService.PlatformScriptableObject.LaneOffset;
             float platformY = platform.PlatformView.transform.position.y;
-            float coinBaseY = platformY + game.CoinService.BaseVerticalOffset;
-            float obstacleY = platformY + 0.25f;
+            float coinY = platformY + game.CoinService.BaseVerticalOffset + 0.6f;
 
             float r = Random.value;
 
             if (r < 0.33f)
             {
-                Vector3 magnetPos = basePos;
-                magnetPos.y = coinBaseY + 0.6f;
+                game.PowerupService.Spawn(PowerupType.Magnet,
+                    new Vector3(basePos.x, coinY, basePos.z));
 
-                game.PowerupService.Spawn(PowerupType.Magnet, magnetPos);
-
-                float zGap = 10f;
-
-                SpawnCoinTrail(magnetPos + new Vector3(-laneOffset, 0f, zGap));
-                SpawnCoinTrail(magnetPos + new Vector3(0f, 0f, zGap));
-                SpawnCoinTrail(magnetPos + new Vector3(laneOffset, 0f, zGap));
-
-                SpawnCoinTrail(magnetPos + new Vector3(-laneOffset, 0f, zGap + 20f));
-                SpawnCoinTrail(magnetPos + new Vector3(0f, 0f, zGap + 20f));
-                SpawnCoinTrail(magnetPos + new Vector3(laneOffset, 0f, zGap + 20f));
-
-                SpawnCoinTrail(magnetPos + new Vector3(-laneOffset, 0f, zGap + 40f));
-                SpawnCoinTrail(magnetPos + new Vector3(0f, 0f, zGap + 40f));
-                SpawnCoinTrail(magnetPos + new Vector3(laneOffset, 0f, zGap + 40f));
-
+                SpawnCoinGrid(basePos, laneOffset);
                 return PowerupType.Magnet;
             }
-            else if (r < 0.66f)
+
+            if (r < 0.66f)
             {
-                Vector3 shieldPos = basePos;
-                shieldPos.y = coinBaseY + 0.6f;
+                game.PowerupService.Spawn(PowerupType.Shield,
+                    new Vector3(basePos.x, coinY, basePos.z));
 
-                game.PowerupService.Spawn(PowerupType.Shield, shieldPos);
-
-                int[] lanes = { -1, 0, 1 };
-
-                float obstacleZGap = 12f;
-
-                for (int i = 0; i < lanes.Length; i++)
-                {
-                    Vector3 pos = basePos;
-                    pos.y = obstacleY;
-                    pos.z += obstacleZGap;
-
-                    platform.SpawnTutorialObstacle(
-                        ObstacleType.SlideOnly,
-                        lanes[i],
-                        pos,
-                        laneOffset
-                    );
-                }
-
+                SpawnSlideWall(basePos, laneOffset, platformY + 0.25f);
                 return PowerupType.Shield;
             }
-            else
-            {
-                Vector3 doubleScorePos = basePos;
-                doubleScorePos.y = coinBaseY + 0.6f;
 
-                game.PowerupService.Spawn(PowerupType.DoubleScore, doubleScorePos);
-                return PowerupType.DoubleScore;
+            game.PowerupService.Spawn(PowerupType.DoubleScore,
+                new Vector3(basePos.x, coinY, basePos.z));
+
+            return PowerupType.DoubleScore;
+        }
+
+        private void SpawnCoinGrid(Vector3 origin, float laneOffset)
+        {
+            float[] zOffsets = { 10f, 30f, 50f };
+
+            for (int z = 0; z < zOffsets.Length; z++)
+            {
+                SpawnCoinTrail(origin + new Vector3(-laneOffset, 0f, zOffsets[z]));
+                SpawnCoinTrail(origin + new Vector3(0f, 0f, zOffsets[z]));
+                SpawnCoinTrail(origin + new Vector3(laneOffset, 0f, zOffsets[z]));
+            }
+        }
+
+        public void SpawnSlideWall(Vector3 basePos, float laneOffset, float y)
+        {
+            int[] lanes = { -1, 0, 1 };
+            float zGap = 12f;
+
+            for (int i = 0; i < lanes.Length; i++)
+            {
+                Vector3 pos = basePos;
+                pos.y = y;
+                pos.z += zGap;
+
+                Platform.SpawnTutorialObstacle(
+                    ObstacleType.SlideOnly,
+                    lanes[i],
+                    pos,
+                    laneOffset
+                );
             }
         }
     }

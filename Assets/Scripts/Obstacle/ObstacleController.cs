@@ -7,6 +7,7 @@ namespace DodoRun.Obstacle
         public ObstacleView ObstacleView { get; private set; }
 
         private bool isUsed = true;
+        private Collider cachedCollider;
 
         public ObstacleController(ObstacleView prefab, Vector3 spawnPos, Transform parent)
         {
@@ -17,6 +18,7 @@ namespace DodoRun.Obstacle
         {
             ObstacleView = Object.Instantiate(prefab, spawnPos, Quaternion.identity, parent);
             ObstacleView.SetController(this);
+            cachedCollider = ObstacleView.GetComponent<Collider>();
             isUsed = true;
         }
 
@@ -31,15 +33,21 @@ namespace DodoRun.Obstacle
             ObstacleView.transform.SetParent(parent);
             ObstacleView.transform.position = spawnPos;
             ObstacleView.gameObject.SetActive(true);
+            SetCollisionEnabled(true);
             isUsed = true;
+        }
+
+        public void SetCollisionEnabled(bool enabled)
+        {
+            if (cachedCollider != null)
+                cachedCollider.enabled = enabled;
         }
 
         public void Deactivate()
         {
             if (ObstacleView != null)
-            {
                 ObstacleView.gameObject.SetActive(false);
-            }
+
             isUsed = false;
         }
 

@@ -2,9 +2,9 @@
 
 namespace DodoRun.Tutorial
 {
-    public class TutorialInputGate
+    public sealed class TutorialInputGate
     {
-        private PlayerController player;
+        private readonly PlayerController player;
 
         public bool AllowLeftRight { get; private set; }
         public bool AllowJump { get; private set; }

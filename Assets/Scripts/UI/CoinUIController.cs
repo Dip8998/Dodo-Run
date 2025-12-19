@@ -1,29 +1,29 @@
-﻿using DodoRun.Main;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
+using DodoRun.Main;
 
 namespace DodoRun.UI
 {
-    public class CoinUIController : MonoBehaviour
+    public sealed class CoinUIController : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI coinText;
 
         private void Start()
         {
             coinText.text = "0";
-            GameService.Instance.EventService.OnCoinCollected.AddListner(OnCoinCollected);
+            GameService.Instance.EventService.OnCoinCollected.AddListner(UpdateCoins);
         }
 
         private void OnDestroy()
         {
-            if (GameService.Instance != null)
-                GameService.Instance.EventService.OnCoinCollected.RemoveListner(OnCoinCollected);
+            if (GameService.Instance == null) return;
+            GameService.Instance.EventService.OnCoinCollected.RemoveListner(UpdateCoins);
         }
 
-        private void OnCoinCollected(int amount)
+        private void UpdateCoins(int _)
         {
-            int total = GameService.Instance.ScoreService.CollectedCoins;
-            coinText.text = total.ToString();
+            coinText.text =
+                GameService.Instance.ScoreService.CollectedCoins.ToString();
         }
     }
 }

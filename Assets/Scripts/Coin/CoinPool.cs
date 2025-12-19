@@ -20,7 +20,7 @@ namespace DodoRun.Coin
             {
                 PooledCoin pooled = freeCoins.Pop();
                 pooled.isUsed = true;
-                pooled.Controller.ResetCoin(coinPrefab, spawnPos);
+                pooled.Controller.Reset(coinPrefab, spawnPos);
                 return pooled.Controller;
             }
 

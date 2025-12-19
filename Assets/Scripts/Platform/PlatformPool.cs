@@ -3,70 +3,40 @@ using UnityEngine;
 
 namespace DodoRun.Platform
 {
-    public class PlatformPool
+    public sealed class PlatformPool
     {
-        private List<PooledPlateform> platforms = new List<PooledPlateform>();
-        private Stack<PooledPlateform> freePlatforms = new Stack<PooledPlateform>();
-        private PlatformScriptableObject platformData;
+        private readonly Stack<PlatformController> free = new();
+        private readonly List<PlatformController> all = new();
+        private readonly PlatformScriptableObject data;
 
-        public PlatformPool(PlatformScriptableObject platformData)
+        public PlatformPool(PlatformScriptableObject data)
         {
-            this.platformData = platformData;
+            this.data = data;
         }
 
-        public void UpatePlatformPool()
+        public PlatformController Get(Vector3 pos, int index)
         {
-            for (int i = 0; i < platforms.Count; i++)
+            if (free.Count > 0)
             {
-                if (platforms[i].isUsed)
-                {
-                    platforms[i].Platform.UpdatePlatform();
-                }
-            }
-        }
-
-        public PlatformController GetPlatform(Vector3 spawnPos, int platformIndex)
-        {
-            if (freePlatforms.Count > 0)
-            {
-                PooledPlateform platform = freePlatforms.Pop();
-                platform.isUsed = true;
-                platform.Platform.ResetPlatform(spawnPos, platformIndex);
-                return platform.Platform;
+                var p = free.Pop();
+                p.ResetPlatform(pos, index);
+                return p;
             }
 
-            return CreateNewPlatformPool(spawnPos, platformIndex);
+            var created = new PlatformController(data, pos, index);
+            all.Add(created);
+            return created;
         }
 
-        public void ReturnPlatformToPool(PlatformController returnedPlatform)
+        public void Return(PlatformController platform)
         {
-            if (returnedPlatform == null) return;
-
-            for (int i = 0; i < platforms.Count; i++)
-            {
-                PooledPlateform platform = platforms[i];
-                if (platform.Platform == returnedPlatform && platform.isUsed)
-                {
-                    platform.isUsed = false;
-                    freePlatforms.Push(platform);
-                    break;
-                }
-            }
+            free.Push(platform);
         }
 
-        public PlatformController CreateNewPlatformPool(Vector3 spawnPos, int platformIndex)
+        public void Update()
         {
-            PooledPlateform platform = new PooledPlateform();
-            platform.Platform = new PlatformController(platformData, spawnPos, platformIndex);
-            platform.isUsed = true;
-            platforms.Add(platform);
-            return platform.Platform;
-        }
-
-        public class PooledPlateform
-        {
-            public PlatformController Platform;
-            public bool isUsed;
+            for (int i = 0; i < all.Count; i++)
+                all[i].UpdatePlatform();
         }
     }
 }

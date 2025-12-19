@@ -1,43 +1,34 @@
-using DodoRun.Main;
 using UnityEngine;
+using DodoRun.Main;
 
 namespace DodoRun.Player
 {
-    public class PlayerView : MonoBehaviour
+    public sealed class PlayerView : MonoBehaviour
     {
-        private PlayerController playerController;
-        private const string obstaccleLayerName = "DeadlyObstacle";
+        private PlayerController controller;
+
         [SerializeField] private Transform groundCheckPosition;
 
-        private int deadlyObstacleLayer;
+        private int deadlyLayer;
 
         public Transform GroundCheckPosition => groundCheckPosition;
 
-        public void SetController(PlayerController playerController)
+        public void SetController(PlayerController controller)
         {
-            this.playerController = playerController;
-            deadlyObstacleLayer = LayerMask.NameToLayer(obstaccleLayerName);
+            this.controller = controller;
+            deadlyLayer = LayerMask.NameToLayer("DeadlyObstacle");
         }
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.layer != deadlyObstacleLayer)
+            if (collision.gameObject.layer != deadlyLayer)
                 return;
 
-            var powerupService = GameService.Instance.PowerupService;
-            if (powerupService != null && powerupService.IsShieldActive)
+            if (GameService.Instance.PowerupService?.IsShieldActive == true)
                 return;
 
-            playerController.Die();
+            controller.Die();
             GameService.Instance.GameOver();
-        }
-
-        private void OnDrawGizmos()
-        {
-            if (groundCheckPosition == null) return;
-
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(groundCheckPosition.position, 0.08f);
         }
     }
 }

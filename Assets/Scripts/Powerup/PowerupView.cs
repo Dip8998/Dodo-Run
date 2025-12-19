@@ -3,7 +3,7 @@ using DodoRun.Player;
 
 namespace DodoRun.PowerUps
 {
-    public class PowerupView : MonoBehaviour
+    public sealed class PowerupView : MonoBehaviour
     {
         private PowerupController controller;
 
@@ -15,8 +15,9 @@ namespace DodoRun.PowerUps
         private void OnTriggerEnter(Collider other)
         {
             if (controller == null) return;
+
             if (other.TryGetComponent<PlayerView>(out _))
-                controller.CollectPowerup();
+                controller.Collect();
         }
     }
 }

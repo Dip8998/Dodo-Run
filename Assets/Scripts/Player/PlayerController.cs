@@ -1,106 +1,114 @@
-﻿using DodoRun.Coin;
-using DodoRun.Main;
-using DodoRun.Tutorial;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
+using DodoRun.Main;
+using DodoRun.Coin;
+using DodoRun.Tutorial;
 
 namespace DodoRun.Player
 {
-    public class PlayerController
+    public sealed class PlayerController
     {
-        public PlayerScriptableObject PlayerScriptableObject { get; private set; }
-        public Rigidbody Rigidbody { get; private set; }
-        public CapsuleCollider CapsuleCollider { get; private set; }
-        public Animator PlayerAnimator { get; private set; }
-        public PlayerView PlayerView { get; private set; }
+        public PlayerScriptableObject PlayerScriptableObject { get; }
+        public Rigidbody Rigidbody { get; }
+        public CapsuleCollider CapsuleCollider { get; }
+        public Animator PlayerAnimator { get; }
+        public PlayerView PlayerView { get; }
 
-        public int CurrentLane { get; set; } = 0;
+        public int CurrentLane { get; set; }
         public bool IsGrounded { get; private set; }
-        public bool IsSliding { get; set; } = false;
+        public bool IsSliding { get; set; }
         public bool CanAcceptInput { get; set; } = true;
 
-        public float OriginalHeight { get; private set; }
-        public float OriginalCenterY { get; private set; }
-        public float SlideDuration { get; private set; } = 0.75f;
+        public float OriginalHeight { get; }
+        public float OriginalCenterY { get; }
+        public float SlideDuration { get; } = 0.75f;
 
-        private PlayerStateMachine stateMachine;
-        private Transform playerTransform;
-        private Transform groundCheckTransform;
+        private readonly PlayerStateMachine stateMachine;
+        private readonly GameService game;
 
-        private Vector3 firstTouchPosition;
-        private Vector3 lastTouchPosition;
+        private Transform transform;
+        private Transform groundCheck;
+
+        private Vector3 touchStart;
+        private Vector3 touchEnd;
         private float touchStartTime;
         private float lastGroundedTime;
-
         private float laneVelocity;
 
-        private const float minSwipeDistance = 80f;
-        private const float minSwipeSpeed = 300f;
-        private const float directionThreshold = 0.9f;
+        private bool isJumping;
 
-        private bool isJumping = false;
-        private float jumpDuration = .75f;
-        private float jumpHeight = 1.7f;
+        private const float MinSwipeDistance = 80f;
+        private const float MinSwipeSpeed = 300f;
+        private const float DirectionThreshold = 0.9f;
 
-        private GameService gameService;
+        private readonly float jumpDuration = 0.75f;
+        private readonly float jumpHeight = 1.7f;
 
-        public PlayerController(PlayerScriptableObject playerScriptableObject)
+        public PlayerController(PlayerScriptableObject data)
         {
-            PlayerScriptableObject = playerScriptableObject;
+            PlayerScriptableObject = data;
+            game = GameService.Instance;
 
-            gameService = GameService.Instance;
-            SetupView();
+            PlayerView = Object.Instantiate(
+                data.Player,
+                data.SpawnPosition,
+                Quaternion.identity
+            );
 
-            stateMachine = new PlayerStateMachine(this);
-        }
-
-        private void SetupView()
-        {
-            PlayerView = Object.Instantiate(PlayerScriptableObject.Player, PlayerScriptableObject.SpawnPosition, Quaternion.identity);
             PlayerView.SetController(this);
 
             Rigidbody = PlayerView.GetComponent<Rigidbody>();
             CapsuleCollider = PlayerView.GetComponent<CapsuleCollider>();
             PlayerAnimator = PlayerView.GetComponent<Animator>();
 
-            playerTransform = Rigidbody.transform;
-            groundCheckTransform = PlayerView.GroundCheckPosition;
+            transform = Rigidbody.transform;
+            groundCheck = PlayerView.GroundCheckPosition;
 
             OriginalHeight = CapsuleCollider.height;
             OriginalCenterY = CapsuleCollider.center.y;
 
-            gameService.StartCoroutine(InvokeSpawn());
+            stateMachine = new PlayerStateMachine(this);
+
+            game.StartCoroutine(NotifySpawn());
         }
 
-        private IEnumerator InvokeSpawn()
+        private IEnumerator NotifySpawn()
         {
             yield return null;
-            gameService.EventService.OnPlayerSpawned.InvokeEvent(playerTransform);
+            game.EventService.OnPlayerSpawned.InvokeEvent(transform);
         }
 
         public void UpdatePlayer()
         {
-            HandleSwipeInputs();
+            HandleInput();
             stateMachine.Update();
 
-            if (GameService.Instance.PowerupService != null && GameService.Instance.PowerupService.IsMagnetActive)
+            if (game.PowerupService?.IsMagnetActive == true)
                 AttractCoins();
 
-            float speedMultiplier = Mathf.Lerp(1f, 1.75f, gameService.Difficulty.Progress);
-
-            if (PlayerAnimator != null)
-                PlayerAnimator.speed = speedMultiplier;
+            PlayerAnimator.speed = Mathf.Lerp(1f, 1.75f, game.Difficulty.Progress);
         }
 
         public void FixedUpdatePlayer()
         {
-            HandleGroundCheck();
+            UpdateGroundedState();
+        }
+
+        public void MoveToLane()
+        {
+            float targetX = CurrentLane * PlayerScriptableObject.LaneOffset;
+            Vector3 pos = transform.position;
+
+            pos.x = IsGrounded && !isJumping
+                ? Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f)
+                : Mathf.Lerp(pos.x, targetX, Time.deltaTime * 7f);
+
+            transform.position = pos;
         }
 
         public void Die()
         {
             if (stateMachine.CurrentState is PlayerDeadState) return;
-
             stateMachine.ChangeState(PlayerState.DEAD);
         }
 
@@ -111,29 +119,12 @@ namespace DodoRun.Player
             Rigidbody.isKinematic = true;
         }
 
-        public void MoveToLane()
-        {
-            float targetX = CurrentLane * PlayerScriptableObject.LaneOffset;
-            Vector3 pos = playerTransform.position;
-
-            if (IsGrounded && !isJumping)
-            {
-                pos.x = Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f);
-            }
-            else
-            {
-                pos.x = Mathf.Lerp(pos.x, targetX, Time.deltaTime * 7f);
-            }
-
-            playerTransform.position = pos;
-        }
-
-        private void HandleGroundCheck()
+        private void UpdateGroundedState()
         {
             if (IsSliding) return;
 
             IsGrounded = Physics.CheckSphere(
-                groundCheckTransform.position,
+                groundCheck.position,
                 PlayerScriptableObject.GroundCheckRadius,
                 PlayerScriptableObject.GroundLayer
             );
@@ -144,160 +135,108 @@ namespace DodoRun.Player
                 lastGroundedTime = Time.time;
         }
 
-        private void HandleSwipeInputs()
+        private void HandleInput()
         {
             if (!CanAcceptInput || Input.touchCount != 1) return;
 
             Touch touch = Input.GetTouch(0);
 
-            switch (touch.phase)
+            if (touch.phase == TouchPhase.Began)
             {
-                case TouchPhase.Began:
-                    touchStartTime = Time.time;
-                    firstTouchPosition = touch.position;
-                    break;
-
-                case TouchPhase.Moved:
-                case TouchPhase.Ended:
-                    lastTouchPosition = touch.position;
-                    if (touch.phase == TouchPhase.Ended)
-                        DetectSwipeInputs();
-                    break;
+                touchStartTime = Time.time;
+                touchStart = touch.position;
+            }
+            else if (touch.phase == TouchPhase.Ended)
+            {
+                touchEnd = touch.position;
+                ProcessSwipe();
             }
         }
 
-        private void DetectSwipeInputs()
+        private void ProcessSwipe()
         {
-            Vector2 diff = lastTouchPosition - firstTouchPosition;
-            float distance = diff.magnitude;
-            if (distance < minSwipeDistance) return;
+            Vector2 delta = touchEnd - touchStart;
+            float distance = delta.magnitude;
+            if (distance < MinSwipeDistance) return;
 
             float elapsed = Time.time - touchStartTime;
-            if (elapsed <= 0.01f) return;
+            if (elapsed <= 0f) return;
 
-            float speed = distance / elapsed;
-            if (speed < minSwipeSpeed) return;
+            if (distance / elapsed < MinSwipeSpeed) return;
 
-            Vector2 direction = diff.normalized;
-            var tutorial = gameService.TutorialService;
-            if (tutorial != null && tutorial.IsActive)
-            {
-                if (!tutorial.CanProcessSwipe(direction))
-                    return;
-            }
-            bool inputConsumed = false;
+            Vector2 dir = delta.normalized;
 
-            if (Vector2.Dot(direction, Vector2.right) > directionThreshold)
-            {
+            var tutorial = game.TutorialService;
+            if (tutorial != null && tutorial.IsActive && !tutorial.CanProcessSwipe(dir))
+                return;
+
+            if (Vector2.Dot(dir, Vector2.right) > DirectionThreshold)
                 stateMachine.ChangeState(PlayerState.RIGHT_SWIPE);
-                inputConsumed = true;
-            }
-            else if (Vector2.Dot(direction, Vector2.left) > directionThreshold)
-            {
+            else if (Vector2.Dot(dir, Vector2.left) > DirectionThreshold)
                 stateMachine.ChangeState(PlayerState.LEFT_SWIPE);
-                inputConsumed = true;
-            }
-            else if (Vector2.Dot(direction, Vector2.up) > directionThreshold && IsGroundedSafe())
-            {
+            else if (Vector2.Dot(dir, Vector2.up) > DirectionThreshold && IsJumpAllowed())
                 stateMachine.ChangeState(PlayerState.JUMP);
-                inputConsumed = true;
-            }
-            else if (Vector2.Dot(direction, Vector2.down) > directionThreshold)
-            {
+            else if (Vector2.Dot(dir, Vector2.down) > DirectionThreshold)
                 stateMachine.ChangeState(PlayerState.ROLLING);
-                inputConsumed = true;
-            }
 
-            if (inputConsumed)
-            {
-                CanAcceptInput = false;
-                gameService.StartCoroutine(InputCooldown(0.1f));
-            }
+            CanAcceptInput = false;
+            game.StartCoroutine(InputCooldown());
         }
 
-        public void ForceLane(int lane)
+        private IEnumerator InputCooldown()
         {
-            CurrentLane = lane;
-        }
-
-        private IEnumerator InputCooldown(float duration)
-        {
-            yield return new WaitForSeconds(duration);
-
-            if (!IsSliding && !(stateMachine.CurrentState is PlayerDeadState))
+            yield return new WaitForSeconds(0.1f);
+            if (!IsSliding && stateMachine.CurrentState is not PlayerDeadState)
                 CanAcceptInput = true;
         }
 
-        bool IsGroundedSafe() => Time.time - lastGroundedTime < 0.05f;
+        private bool IsJumpAllowed()
+        {
+            return Time.time - lastGroundedTime < 0.05f;
+        }
 
         private void AttractCoins()
         {
-            if (!GameService.Instance.PowerupService.IsMagnetActive)
-                return;
+            var coins = game.CoinService.ActiveCoins;
+            float range = game.PowerupService.MagnetRange;
 
-            var coins = GameService.Instance.CoinService.ActiveCoins;
-            float range = GameService.Instance.PowerupService.MagnetRange;
-
-            Vector3 targetOffset = new Vector3(0f, 0.5f, 1.2f);
-            Vector3 magnetTarget = playerTransform.position + targetOffset;
+            Vector3 target = transform.position + new Vector3(0f, 0.5f, 1.2f);
 
             for (int i = 0; i < coins.Count; i++)
             {
                 var c = coins[i];
                 if (!c.IsUsed()) continue;
 
-                var view = c.CoinView;
-                if (view == null || !view.gameObject.activeSelf) continue;
-
-                float dz = view.transform.position.z - playerTransform.position.z;
+                Transform t = c.CoinView.transform;
+                float dz = t.position.z - transform.position.z;
                 if (dz < -1f || dz > range) continue;
 
-                float dx = Mathf.Abs(view.transform.position.x - playerTransform.position.x);
+                float dx = Mathf.Abs(t.position.x - transform.position.x);
                 if (dx > 4f) continue;
 
-                c.IsBeingPulled = true;
+                t.position = Vector3.Lerp(t.position, target, Time.deltaTime * 12f);
 
-                view.transform.position = Vector3.Lerp(
-                    view.transform.position,
-                    magnetTarget,
-                    Time.deltaTime * 12f
-                );
-
-                if (Vector3.Distance(view.transform.position, playerTransform.position) < 0.55f)
-                {
-                    c.CollectCoin();
-                }
+                if (Vector3.Distance(t.position, transform.position) < 0.55f)
+                    c.Collect();
             }
         }
-
-        private bool IsCoinInMagnetRange(Transform coin)
-        {
-            float dz = coin.position.z - playerTransform.position.z;
-            float dx = Mathf.Abs(coin.position.x - playerTransform.position.x);
-
-            return dz > -0.5f && dz < GameService.Instance.PowerupService.MagnetRange && dx < 4f;
-        }
-
 
         public IEnumerator DoSubwayJump()
         {
             isJumping = true;
-            float timer = 0f;
-
             PlayerAnimator.SetTrigger("Jump");
 
-            Vector3 startPos = playerTransform.position;
+            Vector3 start = transform.position;
+            float timer = 0f;
 
             while (timer < jumpDuration)
             {
                 timer += Time.deltaTime;
                 float t = timer / jumpDuration;
 
-                float yOffset = PlayerScriptableObject.JumpCurve.Evaluate(t) * jumpHeight;
-
-                Vector3 pos = playerTransform.position;
-                pos.y = startPos.y + yOffset;
-                playerTransform.position = pos;
+                Vector3 pos = start;
+                pos.y += PlayerScriptableObject.JumpCurve.Evaluate(t) * jumpHeight;
+                transform.position = pos;
 
                 yield return null;
             }

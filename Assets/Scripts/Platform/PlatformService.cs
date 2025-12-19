@@ -2,41 +2,35 @@
 
 namespace DodoRun.Platform
 {
-    public class PlatformService
+    public sealed class PlatformService
     {
-        public PlatformScriptableObject PlatformScriptableObject { get; private set; }
-        private PlatformPool platformPool;
-        private int platformCounter = 0;
+        public PlatformScriptableObject PlatformScriptableObject { get; }
+        private readonly PlatformPool pool;
 
-        private PlatformController latestPlatform;
+        private int counter;
+        private PlatformController latest;
 
-        public PlatformService(PlatformScriptableObject data, Vector3 spawnPos)
+        public PlatformService(PlatformScriptableObject data, Vector3 spawn)
         {
             PlatformScriptableObject = data;
-            platformPool = new PlatformPool(PlatformScriptableObject);
-            latestPlatform = CreatePlatform(spawnPos);
+            pool = new PlatformPool(data);
+            latest = CreatePlatform(spawn);
         }
 
-        public void UpdatePlatform()
+        public void UpdatePlatform() => pool.Update();
+
+        public PlatformController CreatePlatform(Vector3 pos)
         {
-            platformPool.UpatePlatformPool();
+            counter++;
+            latest = pool.Get(pos, counter);
+            return latest;
         }
 
-        public PlatformController CreatePlatform(Vector3 spawnPos)
-        {
-            platformCounter++;
-            latestPlatform = platformPool.GetPlatform(spawnPos, platformCounter);
-            return latestPlatform;
-        }
-
-        public PlatformController GetLatestPlatform()
-        {
-            return latestPlatform;
-        }
+        public PlatformController GetLatestPlatform() => latest;
 
         public void ReturnPlatformToPool(PlatformController controller)
         {
-            platformPool.ReturnPlatformToPool(controller);
+            pool.Return(controller);
         }
     }
 }

@@ -1,534 +1,413 @@
 ﻿using System.Collections.Generic;
-using DodoRun.Coin;
+using UnityEngine;
 using DodoRun.Main;
 using DodoRun.Obstacle;
+using DodoRun.Coin;
 using DodoRun.PowerUps;
 using DodoRun.Tutorial;
-using UnityEngine;
 
 namespace DodoRun.Platform
 {
-    public class PlatformController
+    public sealed class PlatformController
     {
-        private PlatformScriptableObject platformData;
         public PlatformView PlatformView { get; private set; }
 
-        private Rigidbody rigidbody;
-        private Transform platformTransform;
-        private Collider platformCollider;
+        private readonly PlatformScriptableObject data;
+        private readonly List<ObstacleController> obstacles = new();
+        private readonly List<CoinController> coins = new();
 
-        private bool hasSpawnedNext = false;
-        private bool isDestroyed = false;
+        private Transform transform;
+        private Collider collider;
+
         private int platformIndex;
-
-        private readonly List<ObstacleController> spawnedObstacles = new List<ObstacleController>();
-        private readonly List<CoinController> spawnedCoins = new List<CoinController>();
+        private bool spawnedNext;
 
         private const float SegmentLength = 10f;
-        private int trainSegmentsLeft = 0;
-        private int trainLane = 0;
 
-        private static int segmentCounter = 0;
+        private static int segmentCounter;
         private static int nextPowerupSegment = 5;
 
-        public PlatformController(PlatformScriptableObject platformScriptableObject, Vector3 spawnPos, int index)
+        private enum Lane
         {
-            platformData = platformScriptableObject;
-            platformIndex = index;
-            SetupView(spawnPos);
+            Left = -1,
+            Middle = 0,
+            Right = 1
         }
 
-        private void SetupView(Vector3 spawnPos)
+        public PlatformController(
+            PlatformScriptableObject data,
+            Vector3 spawnPos,
+            int index)
         {
-            PlatformView = Object.Instantiate(platformData.Platform, spawnPos, Quaternion.identity);
-            platformTransform = PlatformView.transform;
-            rigidbody = PlatformView.GetComponent<Rigidbody>();
-            platformCollider = PlatformView.GetComponent<Collider>();
+            this.data = data;
+            platformIndex = index;
+
+            PlatformView = Object.Instantiate(data.Platform, spawnPos, Quaternion.identity);
             PlatformView.SetController(this);
 
-            var tutorial = GameService.Instance.TutorialService;
-            if (tutorial != null && tutorial.IsActive)
+            transform = PlatformView.transform;
+            collider = PlatformView.GetComponent<Collider>();
+
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            spawnedNext = false;
+
+            if (GameService.Instance.TutorialService?.IsActive == true)
                 return;
 
-
-            SpawnObstaclesAndCoinsProcedural();
+            SpawnProceduralContent();
         }
 
         public void UpdatePlatform()
         {
-            if (isDestroyed || rigidbody == null) return;
             if (!GameService.Instance.IsGameRunning) return;
 
             float speed = GameService.Instance.Difficulty.CurrentSpeed;
-            float delta = Time.deltaTime;
+            Vector3 delta = Vector3.back * speed * Time.deltaTime;
 
-            Vector3 movement = new Vector3(0f, 0f, -speed * delta);
+            transform.position += delta;
 
-            Vector3 platformPos = platformTransform.position;
-            platformPos += movement;
-            platformTransform.position = platformPos;
+            for (int i = 0; i < obstacles.Count; i++)
+                obstacles[i].ObstacleView.transform.position += delta;
+        }
 
-            for (int i = 0; i < spawnedObstacles.Count; i++)
+        private void SpawnProceduralContent()
+        {
+            obstacles.Clear();
+            coins.Clear();
+
+            float laneOffset = data.LaneOffset;
+            float length = data.PlatformLength;
+
+            float backZ = transform.position.z - length * 0.5f;
+            int segments = Mathf.FloorToInt(length / SegmentLength);
+            int startSegment = Mathf.CeilToInt((data.SafeZoneDistance + 10f) / SegmentLength);
+
+            for (int i = startSegment; i < segments; i++)
             {
-                ObstacleView view = spawnedObstacles[i].ObstacleView;
-                if (view != null && view.gameObject.activeInHierarchy)
-                {
-                    Transform t = view.transform;
-                    Vector3 pos = t.position;
-                    pos += movement;
-                    t.position = pos;
-                }
+                float z = backZ + i * SegmentLength + SegmentLength * 0.5f;
+                Vector3 basePos = new(transform.position.x, transform.position.y, z);
+
+                SpawnSegment(basePos, laneOffset);
             }
         }
 
-        private void SpawnObstaclesAndCoinsProcedural()
+        private void SpawnSegment(Vector3 basePos, float laneOffset)
         {
-            spawnedObstacles.Clear();
-            spawnedCoins.Clear();
+            float r = Random.value;
 
-            float platformLength = platformData.PlatformLength;
-            float laneOffset = platformData.LaneOffset;
+            bool leftTrain, middleTrain, rightTrain;
+            bool leftObstacle, middleObstacle, rightObstacle;
 
-            float platformBackEdgeZ = platformTransform.position.z - (platformLength / 2f);
-            int numberOfSegments = Mathf.FloorToInt(platformLength / SegmentLength);
-            int startSegmentIndex = Mathf.CeilToInt((platformData.SafeZoneDistance + 10f) / SegmentLength);
-
-            var gameService = GameService.Instance;
-            var obstacleService = gameService.ObstacleService;
-            var coinService = gameService.CoinService;
-
-            for (int i = startSegmentIndex; i < numberOfSegments; i++)
+            if (r < 0.6f)
             {
-                float segmentZ =
-                    platformBackEdgeZ +
-                    (i * SegmentLength) +
-                    (SegmentLength / 2f);
+                int obstacleLane = Random.Range(0, 3);
 
-                Vector3 segmentBase = new Vector3(
-                    platformTransform.position.x,
-                    platformTransform.position.y,
-                    segmentZ
-                );
+                leftTrain = obstacleLane != 0;
+                middleTrain = obstacleLane != 1;
+                rightTrain = obstacleLane != 2;
 
-                ObstacleType obstacleType;
-                int lane;
+                leftObstacle = obstacleLane == 0;
+                middleObstacle = obstacleLane == 1;
+                rightObstacle = obstacleLane == 2;
+            }
+            else
+            {
+                int trainLane = Random.Range(0, 3);
 
-                if (trainSegmentsLeft > 0)
+                leftTrain = trainLane == 0;
+                middleTrain = trainLane == 1;
+                rightTrain = trainLane == 2;
+
+                leftObstacle = !leftTrain;
+                middleObstacle = !middleTrain;
+                rightObstacle = !rightTrain;
+            }
+
+            SpawnLane(basePos, laneOffset, Lane.Left, leftTrain, leftObstacle);
+            SpawnLane(basePos, laneOffset, Lane.Middle, middleTrain, middleObstacle);
+            SpawnLane(basePos, laneOffset, Lane.Right, rightTrain, rightObstacle);
+
+            TrySpawnPowerup(
+                ObstacleType.None,
+                GetSafeLane(basePos, laneOffset),
+                basePos,
+                laneOffset
+            );
+        }
+
+        private int GetSafeLane(Vector3 basePos, float laneOffset)
+        {
+            for (int lane = -1; lane <= 1; lane++)
+            {
+                bool blocked = false;
+
+                for (int i = 0; i < obstacles.Count; i++)
                 {
-                    obstacleType = ObstacleType.Train;
-                    lane = trainLane;
-                    trainSegmentsLeft--;
-                }
-                else
-                {
-                    if (platformIndex > 2 && ShouldStartTrainRun())
-                    {
-                        float p = gameService.Difficulty.Progress;
+                    var view = obstacles[i].ObstacleView;
+                    if (view == null || !view.gameObject.activeInHierarchy)
+                        continue;
 
-                        obstacleType = ObstacleType.Train;
-                        lane = obstacleService.GetBalancedLane();
-                        trainLane = lane;
+                    float dz = Mathf.Abs(view.transform.position.z - basePos.z);
+                    if (dz > 6f)
+                        continue;
 
-                        int minTrainSize = Mathf.RoundToInt(Mathf.Lerp(2f, 4f, p));
-                        int maxTrainSize = Mathf.RoundToInt(Mathf.Lerp(4f, 9f, p));
-
-                        trainSegmentsLeft = Random.Range(minTrainSize, maxTrainSize);
-                    }
-                    else
-                    {
-                        obstacleType = obstacleService.GetBalancedRandomObstacleType();
-                        lane = obstacleService.GetBalancedLane();
-                    }
-                }
-
-                Vector3 spawnPos = segmentBase;
-
-                if (obstacleType == ObstacleType.Train)
-                {
-                    spawnPos.y = platformTransform.position.y + 1.3f;
-                }
-                else
-                {
-                    spawnPos.y = platformTransform.position.y + 0.25f;
-                }
-
-                ObstacleController obstacle =
-                    obstacleService.SpawnObstacle(
-                        obstacleType,
-                        lane,
-                        spawnPos,
-                        laneOffset
+                    float dx = Mathf.Abs(
+                        view.transform.position.x -
+                        (basePos.x + lane * laneOffset)
                     );
 
-                if (obstacle != null)
-                {
-                    spawnedObstacles.Add(obstacle);
+                    if (dx < laneOffset * 0.6f)
+                    {
+                        blocked = true;
+                        break;
+                    }
                 }
 
-                SpawnCoinsForSegment(obstacleType, lane, segmentBase, laneOffset);
-                TrySpawnPowerupSafe(obstacleType, lane, segmentBase, laneOffset);
+                if (!blocked)
+                    return lane;
             }
+
+            return 0; 
         }
 
-        private bool ShouldStartTrainRun()
+        private void SpawnLane(
+            Vector3 basePos,
+            float laneOffset,
+            Lane lane,
+            bool spawnTrain,
+            bool spawnObstacle)
         {
-            float p = GameService.Instance.Difficulty.Progress;
+            var game = GameService.Instance;
+            var obstacleService = game.ObstacleService;
 
-            if (platformIndex < 5)
-                return false;
+            int laneIndex = (int)lane;
+            Vector3 spawnPos = basePos;
 
-            float chance = Mathf.Lerp(0.12f, 0.55f, p);
+            if (spawnTrain)
+            {
+                spawnPos.y += 1.3f;
 
-            if (GameService.Instance.Difficulty.CurrentSpeed > 20f)
-                chance += 0.05f;
+                var train = obstacleService.SpawnObstacle(
+                    ObstacleType.Train,
+                    laneIndex,
+                    spawnPos,
+                    laneOffset
+                );
 
-            chance = Mathf.Clamp01(chance);
+                if (train != null)
+                    obstacles.Add(train);
 
-            return Random.value < chance && trainSegmentsLeft == 0;
+                return; 
+            }
+
+            if (spawnObstacle)
+            {
+                ObstacleType type = obstacleService.GetBalancedRandomObstacleType();
+                spawnPos.y += 0.25f;
+
+                var obs = obstacleService.SpawnObstacle(
+                    type,
+                    laneIndex,
+                    spawnPos,
+                    laneOffset
+                );
+
+                if (obs != null)
+                    obstacles.Add(obs);
+
+                SpawnCoins(type, laneIndex, basePos, laneOffset);
+                return;
+            }
+
+            SpawnCoinLine(basePos, laneOffset, laneIndex, 6);
         }
 
-        private void SpawnCoinsForSegment(
+        private void SpawnCoins(
             ObstacleType type,
             int lane,
             Vector3 basePos,
             float laneOffset)
         {
-            int coinCount = 6;
-            int jumpCoinCount = 12;
+            if (type == ObstacleType.Train)
+                return;
+
+            int straight = 6;
+            int arc = 12;
 
             switch (type)
             {
                 case ObstacleType.JumpOnly:
-                    SpawnCoinArc(basePos, laneOffset, lane, jumpCoinCount);
+                    SpawnCoinArc(basePos, laneOffset, lane, arc);
                     break;
 
                 case ObstacleType.SlideOnly:
-                    SpawnCoinUnderSlide(basePos, laneOffset, lane, coinCount);
+                    SpawnCoinsUnder(basePos, laneOffset, lane, straight);
                     break;
 
                 case ObstacleType.SlideOrJump:
-                    {
-                        bool spawnArc = Random.value > 0.5f;
-
-                        if (spawnArc)
-                        {
-                            SpawnCoinArc(basePos, laneOffset, lane, jumpCoinCount);
-                        }
-                        else
-                        {
-                            SpawnStraightCoinRowOnLane(basePos, laneOffset, lane, coinCount);
-                        }
-
-                        break;
-                    }
-
-                case ObstacleType.Train:
-                    return;
+                    if (Random.value > 0.5f)
+                        SpawnCoinArc(basePos, laneOffset, lane, arc);
+                    else
+                        SpawnCoinLine(basePos, laneOffset, lane, straight);
+                    break;
 
                 default:
-                    if (ShouldSpawnCoinsForEmptySegment())
-                    {
-                        SpawnRandomStraightCoinRow(basePos, laneOffset, coinCount);
-                    }
+                    SpawnCoinLine(basePos, laneOffset, lane, straight);
                     break;
             }
         }
 
-        private void TrySpawnPowerupSafe(ObstacleType obstacleType, int lane, Vector3 basePos, float laneOffset)
+        private void SpawnCoinLine(Vector3 basePos, float laneOffset, int lane, int count)
         {
-            var powerupService = GameService.Instance.PowerupService;
-            if (powerupService == null)
-                return;
+            float y = transform.position.y +
+                      GameService.Instance.CoinService.BaseVerticalOffset;
 
-            float difficulty = GameService.Instance.Difficulty.Progress;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 pos = new(
+                    basePos.x + lane * laneOffset,
+                    y,
+                    basePos.z + i * 1.5f
+                );
+
+                var coin = GameService.Instance.CoinService.GetCoin(pos);
+                coin.CoinView.transform.SetParent(transform);
+                coins.Add(coin);
+            }
+        }
+
+        private void SpawnCoinsUnder(Vector3 basePos, float laneOffset, int lane, int count)
+        {
+            float y = transform.position.y + 0.5f;
+
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 pos = new(
+                    basePos.x + lane * laneOffset,
+                    y,
+                    basePos.z + i * 1.2f
+                );
+
+                var coin = GameService.Instance.CoinService.GetCoin(pos);
+                coin.CoinView.transform.SetParent(transform);
+                coins.Add(coin);
+            }
+        }
+
+        private void SpawnCoinArc(Vector3 basePos, float laneOffset, int lane, int count)
+        {
+            float baseY = transform.position.y +
+                          GameService.Instance.CoinService.BaseVerticalOffset;
+
+            float arcLength = 10f;
+            float start = -arcLength * 0.5f;
+            float step = arcLength / (count - 1);
+
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (float)(count - 1);
+                float height = Mathf.Sin(t * Mathf.PI) * 1.5f;
+
+                Vector3 pos = new(
+                    basePos.x + lane * laneOffset,
+                    baseY + height,
+                    basePos.z + start + step * i
+                );
+
+                var coin = GameService.Instance.CoinService.GetCoin(pos);
+                coin.CoinView.transform.SetParent(transform);
+                coins.Add(coin);
+            }
+        }
+
+        private void TrySpawnPowerup(
+            ObstacleType type,
+            int lane,
+            Vector3 basePos,
+            float laneOffset)
+        {
+            var powerups = GameService.Instance.PowerupService;
+            if (powerups == null) return;
 
             segmentCounter++;
-
             if (segmentCounter < nextPowerupSegment)
                 return;
 
-            int selectedLane = lane;
-            bool laneOk = !IsLaneBlocked(selectedLane, basePos, laneOffset) &&
-                          !IsObstacleNearby(basePos, selectedLane, laneOffset);
-
-            if (!laneOk)
-            {
-                for (int l = -1; l <= 1; l++)
-                {
-                    if (!IsLaneBlocked(l, basePos, laneOffset) &&
-                        !IsObstacleNearby(basePos, l, laneOffset))
-                    {
-                        selectedLane = l;
-                        laneOk = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!laneOk)
-                return;
-
-            float heightOffset = 0.55f;
-
-            float finalHeight = platformTransform.position.y +
-                                GameService.Instance.CoinService.BaseVerticalOffset +
-                                heightOffset;
-
-            Vector3 pos = new Vector3(
-                basePos.x + selectedLane * laneOffset,
-                finalHeight,
+            Vector3 pos = new(
+                basePos.x + lane * laneOffset,
+                transform.position.y +
+                GameService.Instance.CoinService.BaseVerticalOffset + 0.55f,
                 basePos.z + 2.2f
             );
 
-            float r = Random.value;
+            PowerupType powerup =
+                Random.value < 0.5f ? PowerupType.Magnet :
+                Random.value < 0.8f ? PowerupType.Shield :
+                                      PowerupType.DoubleScore;
 
-            PowerupType type =
-                r < 0.5f ? PowerupType.Magnet :
-                r < 0.8f ? PowerupType.Shield :
-                          PowerupType.DoubleScore;
-
-            powerupService.Spawn(type, pos);
+            powerups.Spawn(powerup, pos);
 
             segmentCounter = 0;
 
-            int minSeg = Mathf.RoundToInt(Mathf.Lerp(8f, 4f, difficulty));
-            int maxSeg = Mathf.RoundToInt(Mathf.Lerp(14f, 6f, difficulty));
-            nextPowerupSegment = Random.Range(minSeg, maxSeg + 1);
-        }
-
-
-        private bool IsLaneBlocked(int lane, Vector3 basePos, float laneOffset)
-        {
-            for (int i = 0; i < spawnedObstacles.Count; i++)
-            {
-                var obs = spawnedObstacles[i].ObstacleView;
-                if (obs == null) continue;
-
-                float dz = Mathf.Abs(obs.transform.position.z - basePos.z);
-                if (dz > 4f) continue;
-
-                float xDist = Mathf.Abs(obs.transform.position.x - (basePos.x + lane * laneOffset));
-                if (xDist < laneOffset * 0.6f)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private bool IsObstacleNearby(Vector3 basePos, int lane, float laneOffset)
-        {
-            float safeRange = 6f;
-
-            for (int i = 0; i < spawnedObstacles.Count; i++)
-            {
-                var obs = spawnedObstacles[i].ObstacleView;
-                if (obs == null || !obs.gameObject.activeInHierarchy)
-                    continue;
-
-                float dz = Mathf.Abs(obs.transform.position.z - basePos.z);
-                if (dz > safeRange)
-                    continue;
-
-                float xDistance = Mathf.Abs(obs.transform.position.x - (basePos.x + lane * laneOffset));
-
-                if (xDistance < laneOffset * 0.6f)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private bool ShouldSpawnCoinsForEmptySegment()
-        {
-            float difficulty = GameService.Instance.Difficulty.Progress;
-            float chance = Mathf.Lerp(0.8f, 0.2f, difficulty);
-            return Random.value < chance;
-        }
-
-        private void SpawnRandomStraightCoinRow(
-            Vector3 basePos,
-            float laneOffset,
-            int count)
-        {
-            int lane = GameService.Instance.ObstacleService.GetBalancedLane();
-            SpawnStraightCoinRowOnLane(basePos, laneOffset, lane, count);
-        }
-
-        private void SpawnStraightCoinRowOnLane(
-            Vector3 basePos,
-            float laneOffset,
-            int lane,
-            int count)
-        {
-            float baseHeight =
-                platformTransform.position.y +
-                GameService.Instance.CoinService.BaseVerticalOffset;
-
-            var coinService = GameService.Instance.CoinService;
-
-            for (int i = 0; i < count; i++)
-            {
-                Vector3 pos = new Vector3(
-                    basePos.x + lane * laneOffset,
-                    baseHeight,
-                    basePos.z + (i * 1.5f)
-                );
-
-                CoinController coin = coinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(platformTransform);
-                spawnedCoins.Add(coin);
-            }
-        }
-
-        private void SpawnCoinArc(
-            Vector3 basePos,
-            float laneOffset,
-            int lane,
-            int count)
-        {
-            float obstacleHeight = 1.5f;
-            Collider obstacleCollider = null;
-
-            for (int i = 0; i < spawnedObstacles.Count; i++)
-            {
-                ObstacleView view = spawnedObstacles[i].ObstacleView;
-                if (view == null) continue;
-
-                if (Mathf.Abs(view.transform.position.z - basePos.z) < 0.5f)
-                {
-                    obstacleCollider = view.GetComponent<Collider>();
-                    break;
-                }
-            }
-
-            if (obstacleCollider != null)
-                obstacleHeight = obstacleCollider.bounds.size.y;
-
-            float maxArcHeight = Mathf.Clamp(obstacleHeight * 1.2f, 1.5f, 4f);
-
-            float baseHeight = platformTransform.position.y +
-                GameService.Instance.CoinService.BaseVerticalOffset;
-
-            float arcStartOffset = -5f;
-            float arcEndOffset = 5.5f;
-            float step = (arcEndOffset - arcStartOffset) / (count - 1);
-
-            var coinService = GameService.Instance.CoinService;
-
-            for (int i = 0; i < count; i++)
-            {
-                float t = (float)i / (count - 1);
-                float extraHeight = Mathf.Sin(t * Mathf.PI) * maxArcHeight;
-
-                Vector3 pos = new Vector3(
-                    basePos.x + lane * laneOffset,
-                    baseHeight + extraHeight,
-                    basePos.z + arcStartOffset + (i * step)
-                );
-
-                CoinController coin = coinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(platformTransform);
-                spawnedCoins.Add(coin);
-            }
-        }
-
-        private void SpawnCoinUnderSlide(
-            Vector3 basePos,
-            float laneOffset,
-            int lane,
-            int count)
-        {
-            float height = platformTransform.position.y + 0.5f;
-            var coinService = GameService.Instance.CoinService;
-
-            for (int i = 0; i < count; i++)
-            {
-                Vector3 pos = new Vector3(
-                    basePos.x + lane * laneOffset,
-                    height,
-                    basePos.z + (i * 1.2f)
-                );
-
-                CoinController coin = coinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(platformTransform);
-                spawnedCoins.Add(coin);
-            }
+            float p = GameService.Instance.Difficulty.Progress;
+            nextPowerupSegment = Random.Range(
+                Mathf.RoundToInt(Mathf.Lerp(8, 4, p)),
+                Mathf.RoundToInt(Mathf.Lerp(14, 6, p))
+            );
         }
 
         public void ResetPlatform(Vector3 spawnPos, int index)
         {
             platformIndex = index;
-            isDestroyed = false;
-            hasSpawnedNext = false;
-            trainSegmentsLeft = 0;
+            spawnedNext = false;
 
-            var gameService = GameService.Instance;
+            Cleanup();
 
-            for (int i = spawnedObstacles.Count - 1; i >= 0; i--)
-            {
-                gameService.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
-            }
-            spawnedObstacles.Clear();
-
-            if (platformCollider == null)
-                platformCollider = PlatformView.GetComponent<Collider>();
-
-            platformCollider.enabled = false;
-
-            platformTransform.position = spawnPos;
+            collider.enabled = false;
+            transform.position = spawnPos;
             PlatformView.gameObject.SetActive(true);
+            collider.enabled = true;
 
-            platformCollider.enabled = true;
-
-            var tutorial = GameService.Instance.TutorialService;
-            if (tutorial != null && tutorial.IsActive)
-                return;
-
-            SpawnObstaclesAndCoinsProcedural();
+            Initialize();
         }
 
-        public void HandleCollision(Collider collider)
+        private void Cleanup()
         {
-            var gameService = GameService.Instance;
+            var game = GameService.Instance;
 
-            if (collider.gameObject.CompareTag("Create") && !hasSpawnedNext)
+            for (int i = 0; i < obstacles.Count; i++)
+                game.ObstacleService.ReturnObstacleToPool(obstacles[i]);
+
+            obstacles.Clear();
+
+            for (int i = 0; i < coins.Count; i++)
+                game.CoinService.ReturnCoinToPool(coins[i]);
+
+            coins.Clear();
+        }
+
+        public void HandleCollision(Collider other)
+        {
+            var game = GameService.Instance;
+
+            if (other.CompareTag("Create") && !spawnedNext)
             {
-                hasSpawnedNext = true;
+                spawnedNext = true;
 
-                float length = platformData.PlatformLength;
+                Vector3 pos = transform.position;
+                pos.z += data.PlatformLength - 0.2f;
 
-                Vector3 spawnPos = new Vector3(
-                    platformTransform.position.x,
-                    platformTransform.position.y,
-                    platformTransform.position.z + length - 0.2f
-                );
-
-                PlatformController controller =
-                    gameService.PlatformService.CreatePlatform(spawnPos);
+                game.PlatformService.CreatePlatform(pos);
             }
 
-            if (collider.gameObject.CompareTag("Destroy"))
+            if (other.CompareTag("Destroy"))
             {
-                isDestroyed = true;
-
-                for (int i = spawnedObstacles.Count - 1; i >= 0; i--)
-                {
-                    gameService.ObstacleService.ReturnObstacleToPool(spawnedObstacles[i]);
-                }
-                spawnedObstacles.Clear();
-
-                for (int i = spawnedCoins.Count - 1; i >= 0; i--)
-                {
-                    if (spawnedCoins[i].CoinView.transform.position.z <
-                        gameService.PlayerService.GetPlayerZ() - 2f)
-                    {
-                        gameService.CoinService.ReturnCoinToPool(spawnedCoins[i]);
-                        spawnedCoins.RemoveAt(i);
-                    }
-                }
-                spawnedCoins.Clear();
-
-                gameService.PlatformService.ReturnPlatformToPool(this);
+                Cleanup();
+                game.PlatformService.ReturnPlatformToPool(this);
                 PlatformView.gameObject.SetActive(false);
             }
         }
@@ -536,29 +415,23 @@ namespace DodoRun.Platform
         public ObstacleController SpawnTutorialObstacle(
             ObstacleType type,
             int lane,
-            Vector3 basePos,
+            Vector3 pos,
             float laneOffset)
         {
-            ObstacleController obstacle =
-                GameService.Instance.ObstacleService.SpawnObstacle(
-                    type,
-                    lane,
-                    basePos,
-                    laneOffset
-                );
+            var obs = GameService.Instance.ObstacleService
+                .SpawnObstacle(type, lane, pos, laneOffset);
 
-            if (obstacle != null)
-                spawnedObstacles.Add(obstacle);
+            if (obs != null)
+                obstacles.Add(obs);
 
-            return obstacle;
+            return obs;
         }
 
         public void SpawnTutorialCoin(Vector3 pos)
         {
-            CoinController coin = GameService.Instance.CoinService.GetCoin(pos);
-            coin.CoinView.transform.SetParent(platformTransform);
-            spawnedCoins.Add(coin);
+            var coin = GameService.Instance.CoinService.GetCoin(pos);
+            coin.CoinView.transform.SetParent(transform);
+            coins.Add(coin);
         }
-
     }
 }

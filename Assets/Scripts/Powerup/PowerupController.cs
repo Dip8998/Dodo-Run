@@ -3,28 +3,28 @@ using DodoRun.Main;
 
 namespace DodoRun.PowerUps
 {
-    public class PowerupController
+    public sealed class PowerupController
     {
         public PowerupView View { get; private set; }
         public PowerupType Type { get; private set; }
 
         private bool isUsed;
 
-        public PowerupController(PowerupView prefab, PowerupType type, Vector3 position)
+        public PowerupController(PowerupView prefab, PowerupType type, Vector3 pos)
         {
-            Reset(prefab, type, position);
+            Initialize(prefab, type, pos);
         }
 
-        public void Reset(PowerupView prefab, PowerupType type, Vector3 position)
+        public void Initialize(PowerupView prefab, PowerupType type, Vector3 pos)
         {
             if (View == null)
             {
-                View = Object.Instantiate(prefab, position, Quaternion.identity);
+                View = Object.Instantiate(prefab, pos, Quaternion.identity);
                 View.SetController(this);
             }
             else
             {
-                View.transform.position = position;
+                View.transform.position = pos;
                 View.gameObject.SetActive(true);
             }
 
@@ -32,7 +32,7 @@ namespace DodoRun.PowerUps
             isUsed = true;
         }
 
-        public void CollectPowerup()
+        public void Collect()
         {
             GameService.Instance.PowerupService.ActivatePowerup(Type);
             Deactivate();
@@ -40,10 +40,10 @@ namespace DodoRun.PowerUps
 
         public void Deactivate()
         {
-            if (View != null)
-                View.gameObject.SetActive(false);
+            if (!isUsed) return;
 
             isUsed = false;
+            View.gameObject.SetActive(false);
             GameService.Instance.PowerupService.ReturnToPool(this);
         }
 

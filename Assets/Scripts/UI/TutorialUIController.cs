@@ -1,12 +1,12 @@
 ﻿using TMPro;
 using UnityEngine;
+using DodoRun.Main;
 using DodoRun.Tutorial;
 using DodoRun.PowerUps;
-using DodoRun.Main;
 
 namespace DodoRun.UI
 {
-    public class TutorialUIController : MonoBehaviour
+    public sealed class TutorialUIController : MonoBehaviour
     {
         [SerializeField] private GameObject panel;
         [SerializeField] private TextMeshProUGUI instructionText;
@@ -15,13 +15,12 @@ namespace DodoRun.UI
         private TutorialService tutorial;
         private TutorialState lastState;
         private float timer;
-        private bool isVisible;
+        private bool visible;
 
         private void Start()
         {
             tutorial = GameService.Instance.TutorialService;
             panel.SetActive(false);
-            isVisible = false;
         }
 
         private void Update()
@@ -35,86 +34,89 @@ namespace DodoRun.UI
             if (tutorial.CurrentState != lastState)
             {
                 lastState = tutorial.CurrentState;
-                ShowPanel();
+                Show();
             }
 
-            if (!isVisible) return;
+            if (!visible) return;
 
             timer += Time.deltaTime;
-
             if (timer >= visibleDuration)
             {
                 panel.SetActive(false);
-                isVisible = false;
+                visible = false;
             }
         }
 
-        private void ShowPanel()
+        private void Show()
         {
             timer = 0f;
-            isVisible = true;
+            visible = true;
             panel.SetActive(true);
-            instructionText.text = GetTextForState(lastState);
+            instructionText.text = GetText(lastState);
         }
 
-        private string GetTextForState(TutorialState state)
+        private string GetText(TutorialState state)
         {
             if (state == TutorialState.MagnetIntro)
-                return GetPowerupInstruction();
+                return GetPowerupText();
 
             string[] options = state switch
             {
                 TutorialState.Welcome => new[]
                 {
-            "Welcome to Dodo Run\nGet Ready!",
-            "Welcome!\nYour Run Starts Now",
-            "Welcome to Dodo Run\nSwipe to Survive"
-        },
+                    "Welcome to Dodo Run\nGet Ready!",
+                    "Welcome!\nYour Run Starts Now",
+                    "Welcome to Dodo Run\nSwipe to Survive"
+                },
 
                 TutorialState.TrainSwipe => new[]
                 {
-            "Train Ahead!\nSwipe Left or Right",
-            "Avoid the Train\nSwipe Left or Right",
-            "Move Fast!\nSwipe Left or Right"
-        },
+                    "Train Ahead!\nSwipe Left or Right",
+                    "Avoid the Train\nSwipe Left or Right",
+                    "Move Fast!\nSwipe Left or Right"
+                },
 
-                TutorialState.JumpOrSlide => new[]
+                TutorialState.JumpOnly => new[]
                 {
-            "Obstacle Ahead\nSwipe Up to Jump\nSwipe Down to Slide",
-            "Jump or Slide\nSwipe Up or Down",
-        },
+                    "Jump Over the Obstacle\nSwipe Up",
+                    "Jump!\nSwipe Up to Avoid"
+                },
+
+                TutorialState.SlideOnly => new[]
+                {
+                    "Slide Under the Obstacle\nSwipe Down",
+                    "Slide!\nSwipe Down to Avoid"
+                },
+
 
                 TutorialState.CoinTrail => new[]
                 {
-            "Collect Coins\nIncrease Your Score",
-            "Grab Coins\nScore Goes Up",
-            "Coins Ahead\nCollect Them All"
-        },
+                    "Collect Coins\nIncrease Your Score",
+                    "Grab Coins\nScore Goes Up",
+                    "Coins Ahead\nCollect Them All"
+                },
 
-                _ => new[] { "" }
+                _ => new[] { string.Empty }
             };
 
             return options[Random.Range(0, options.Length)];
         }
 
-        private string GetPowerupInstruction()
+        private string GetPowerupText()
         {
-            if (tutorial == null) return "";
-
             return tutorial.ActiveTutorialPowerup switch
             {
                 PowerupType.Magnet =>
                     "Magnet Power!\nCoins Fly to You",
 
                 PowerupType.Shield =>
-                    "Shield Active!\nSwipe Down to Slide Safely",
+                    "Shield Active!\nYou’re Safe from Obstacles",
 
                 PowerupType.DoubleScore =>
-                    "Double Score!\nYour Score Increases Faster",
+                    "Double Score!\nEarn Points Faster",
 
-                _ => ""
+                _ => string.Empty
             };
         }
-
     }
 }

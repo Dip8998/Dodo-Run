@@ -3,61 +3,58 @@ using DodoRun.Main;
 
 namespace DodoRun.Coin
 {
-    public class CoinController
+    public sealed class CoinController
     {
         public CoinView CoinView { get; private set; }
-        private bool isUsed = true;
-        public bool IsBeingPulled = false;
+        public bool IsBeingPulled { get; set; }
 
-        public CoinController(CoinView coinView, Vector3 spawnPos)
+        private bool isUsed;
+
+        public CoinController(CoinView prefab, Vector3 spawnPos)
         {
-            SetupView(coinView, spawnPos);
+            Create(prefab, spawnPos);
         }
 
-        private void SetupView(CoinView coinView, Vector3 spawnPos)
+        private void Create(CoinView prefab, Vector3 pos)
         {
-            CoinView = Object.Instantiate(coinView, spawnPos, Quaternion.identity);
+            CoinView = Object.Instantiate(prefab, pos, Quaternion.identity);
             CoinView.SetController(this);
             isUsed = true;
         }
 
-        public void CollectCoin()
+        public void Reset(CoinView prefab, Vector3 pos)
         {
-            int value = 1;
-
-            GameService.Instance.ScoreService.AddCoinScore(10);
-            GameService.Instance.ScoreService.AddCoins(value);
-            GameService.Instance.EventService.OnCoinCollected.InvokeEvent(value);
-
-            Deactivate();
-        }
-
-
-        public void ResetCoin(CoinView coinView, Vector3 spawnPos)
-        {
-            if (CoinView == null)
-            {
-                SetupView(coinView, spawnPos);
-                return;
-            }
             IsBeingPulled = false;
 
-            CoinView.transform.position = spawnPos;
+            if (CoinView == null)
+            {
+                Create(prefab, pos);
+                return;
+            }
+
+            CoinView.transform.position = pos;
             CoinView.gameObject.SetActive(true);
             isUsed = true;
         }
 
+        public void Collect()
+        {
+            GameService.Instance.ScoreService.AddCoinScore(10);
+            GameService.Instance.ScoreService.AddCoins(1);
+            GameService.Instance.EventService.OnCoinCollected.InvokeEvent(1);
+
+            Deactivate();
+        }
+
         public void Deactivate()
         {
-            if (CoinView != null)
-            {
-                CoinView.gameObject.SetActive(false);
-            }
+            if (!isUsed) return;
+
             isUsed = false;
+            CoinView.gameObject.SetActive(false);
             GameService.Instance.CoinService.ReturnCoinToPool(this);
         }
 
         public bool IsUsed() => isUsed;
     }
 }
-

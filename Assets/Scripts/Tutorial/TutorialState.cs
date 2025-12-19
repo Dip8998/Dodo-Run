@@ -5,7 +5,8 @@
         None,
         Welcome,
         TrainSwipe,
-        JumpOrSlide,
+        JumpOnly,
+        SlideOnly,
         CoinTrail,
         MagnetIntro,
         Finished

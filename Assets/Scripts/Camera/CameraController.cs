@@ -3,53 +3,48 @@ using DodoRun.Main;
 
 namespace DodoRun.Camera
 {
-    public class CameraController : MonoBehaviour
+    public sealed class CameraController : MonoBehaviour
     {
-        [SerializeField] private Vector3 playerOffset = new Vector3(0f, 2.2f, -4.8f);
+        [SerializeField] private Vector3 playerOffset = new(0f, 2.2f, -4.8f);
         [SerializeField] private float followSmoothness = 0.08f;
         [SerializeField] private float rotationSmoothness = 8f;
 
-        private Transform currentTarget;
+        private Transform target;
         private Transform cachedTransform;
-
-        private Vector3 velocity = Vector3.zero;
-        private Quaternion forwardLookRotation;
+        private Vector3 velocity;
+        private Quaternion forwardRotation;
 
         private void Awake()
         {
             cachedTransform = transform;
-            forwardLookRotation = Quaternion.LookRotation(Vector3.forward);
+            forwardRotation = Quaternion.LookRotation(Vector3.forward);
 
-            GameService.Instance.EventService.OnPlayerSpawned.AddListner(BindToPlayer);
+            GameService.Instance.EventService.OnPlayerSpawned.AddListner(Bind);
         }
 
         private void OnDestroy()
         {
-            GameService.Instance?.EventService?.OnPlayerSpawned?.RemoveListner(BindToPlayer);
+            GameService.Instance?.EventService?.OnPlayerSpawned.RemoveListner(Bind);
         }
 
         private void LateUpdate()
         {
-            if (currentTarget == null) return;
+            if (target == null) return;
 
-            Vector3 targetPos = currentTarget.position + playerOffset;
             cachedTransform.position = Vector3.SmoothDamp(
                 cachedTransform.position,
-                targetPos,
+                target.position + playerOffset,
                 ref velocity,
                 followSmoothness
             );
 
             cachedTransform.rotation = Quaternion.Slerp(
                 cachedTransform.rotation,
-                forwardLookRotation,
+                forwardRotation,
                 rotationSmoothness * Time.deltaTime
             );
         }
 
-        private void BindToPlayer(Transform player)
-        {
-            currentTarget = player;
-        }
+        private void Bind(Transform player) => target = player;
     }
 }

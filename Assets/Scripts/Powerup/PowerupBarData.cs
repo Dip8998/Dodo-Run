@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DodoRun.PowerUps
 {
-    public class PowerupBarData : MonoBehaviour
+    public sealed class PowerupBarData : MonoBehaviour
     {
         public float DrainSpeed;
     }
