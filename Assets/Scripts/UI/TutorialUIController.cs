@@ -16,6 +16,7 @@ namespace DodoRun.UI
         private TutorialState lastState;
         private float timer;
         private bool visible;
+        private PowerupType lastPowerup;
 
         private void Start()
         {
@@ -36,6 +37,13 @@ namespace DodoRun.UI
                 lastState = tutorial.CurrentState;
                 Show();
             }
+            else if (
+                tutorial.CurrentState == TutorialState.MagnetIntro &&
+                tutorial.ActiveTutorialPowerup != lastPowerup
+            )
+            {
+                Show();
+            }
 
             if (!visible) return;
 
@@ -52,6 +60,8 @@ namespace DodoRun.UI
             timer = 0f;
             visible = true;
             panel.SetActive(true);
+
+            lastPowerup = tutorial.ActiveTutorialPowerup; 
             instructionText.text = GetText(lastState);
         }
 

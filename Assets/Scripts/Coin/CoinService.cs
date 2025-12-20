@@ -55,7 +55,8 @@ namespace DodoRun.Coin
 
         public void UpdateCoins()
         {
-            if (!GameService.Instance.IsGameRunning) return;
+            if (!GameService.Instance.IsGameRunning)
+                return;
 
             if (playerTransform == null)
             {
@@ -63,6 +64,9 @@ namespace DodoRun.Coin
                 if (playerTransform == null)
                     return;
             }
+
+            float speed = GameService.Instance.Difficulty.CurrentSpeed;
+            Vector3 delta = Vector3.back * speed * Time.deltaTime;
 
             float playerZ = playerTransform.position.z;
 
@@ -72,7 +76,12 @@ namespace DodoRun.Coin
                 CoinView view = coin.CoinView;
 
                 if (view == null || !view.gameObject.activeInHierarchy)
+                {
+                    activeCoins.RemoveAt(i);
                     continue;
+                }
+
+                view.transform.position += delta;
 
                 if (view.transform.position.z < playerZ - despawnDistance)
                 {

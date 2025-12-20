@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using DodoRun.Coin;
 using DodoRun.Main;
 using DodoRun.Obstacle;
-using DodoRun.Coin;
 using DodoRun.PowerUps;
-using DodoRun.Tutorial;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace DodoRun.Platform
 {
@@ -22,7 +21,9 @@ namespace DodoRun.Platform
         private int platformIndex;
         private bool spawnedNext;
 
-        private const float SegmentLength = 10f;
+        private const float SegmentLength = 6f;
+        private const int MinPowerupGapSegments = 2;
+        private const int MaxPowerupGapSegments = 4;
 
         private static int segmentCounter;
         private static int nextPowerupSegment = 5;
@@ -171,7 +172,7 @@ namespace DodoRun.Platform
                     return lane;
             }
 
-            return 0; 
+            return 0;
         }
 
         private void SpawnLane(
@@ -181,8 +182,7 @@ namespace DodoRun.Platform
             bool spawnTrain,
             bool spawnObstacle)
         {
-            var game = GameService.Instance;
-            var obstacleService = game.ObstacleService;
+            var obstacleService = GameService.Instance.ObstacleService;
 
             int laneIndex = (int)lane;
             Vector3 spawnPos = basePos;
@@ -201,7 +201,7 @@ namespace DodoRun.Platform
                 if (train != null)
                     obstacles.Add(train);
 
-                return; 
+                return;
             }
 
             if (spawnObstacle)
@@ -274,9 +274,7 @@ namespace DodoRun.Platform
                     basePos.z + i * 1.5f
                 );
 
-                var coin = GameService.Instance.CoinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(transform);
-                coins.Add(coin);
+                coins.Add(GameService.Instance.CoinService.GetCoin(pos));
             }
         }
 
@@ -292,9 +290,7 @@ namespace DodoRun.Platform
                     basePos.z + i * 1.2f
                 );
 
-                var coin = GameService.Instance.CoinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(transform);
-                coins.Add(coin);
+                coins.Add(GameService.Instance.CoinService.GetCoin(pos));
             }
         }
 
@@ -318,9 +314,7 @@ namespace DodoRun.Platform
                     basePos.z + start + step * i
                 );
 
-                var coin = GameService.Instance.CoinService.GetCoin(pos);
-                coin.CoinView.transform.SetParent(transform);
-                coins.Add(coin);
+                coins.Add(GameService.Instance.CoinService.GetCoin(pos));
             }
         }
 
@@ -341,22 +335,22 @@ namespace DodoRun.Platform
                 basePos.x + lane * laneOffset,
                 transform.position.y +
                 GameService.Instance.CoinService.BaseVerticalOffset + 0.55f,
-                basePos.z + 2.2f
+                basePos.z + SegmentLength * 2.5f 
             );
 
+            float r = Random.value;
+
             PowerupType powerup =
-                Random.value < 0.5f ? PowerupType.Magnet :
-                Random.value < 0.8f ? PowerupType.Shield :
-                                      PowerupType.DoubleScore;
+                r < 0.45f ? PowerupType.Magnet :
+                r < 0.80f ? PowerupType.Shield :
+                            PowerupType.DoubleScore;
 
             powerups.Spawn(powerup, pos);
 
             segmentCounter = 0;
-
-            float p = GameService.Instance.Difficulty.Progress;
             nextPowerupSegment = Random.Range(
-                Mathf.RoundToInt(Mathf.Lerp(8, 4, p)),
-                Mathf.RoundToInt(Mathf.Lerp(14, 6, p))
+                MinPowerupGapSegments,
+                MaxPowerupGapSegments + 1
             );
         }
 
@@ -383,11 +377,6 @@ namespace DodoRun.Platform
                 game.ObstacleService.ReturnObstacleToPool(obstacles[i]);
 
             obstacles.Clear();
-
-            for (int i = 0; i < coins.Count; i++)
-                game.CoinService.ReturnCoinToPool(coins[i]);
-
-            coins.Clear();
         }
 
         public void HandleCollision(Collider other)
@@ -429,9 +418,7 @@ namespace DodoRun.Platform
 
         public void SpawnTutorialCoin(Vector3 pos)
         {
-            var coin = GameService.Instance.CoinService.GetCoin(pos);
-            coin.CoinView.transform.SetParent(transform);
-            coins.Add(coin);
+            coins.Add(GameService.Instance.CoinService.GetCoin(pos));
         }
     }
 }

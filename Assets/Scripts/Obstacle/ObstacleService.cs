@@ -82,31 +82,27 @@ namespace DodoRun.Obstacle
 
         private ObstacleType GetRandomObstacleType()
         {
-            var difficulty = GameService.Instance.Difficulty;
+            float p = GameService.Instance.Difficulty.Progress;
+            float r = Random.value;
 
-            float obstacleProbability = difficulty.CurrentObstacleProbability;
-            float hardChance = difficulty.CurrentHardObstacleChance;
+            if (r < Mathf.Lerp(0.6f, 0.35f, p))
+                return ObstacleType.JumpOnly;
 
-            if (Random.value > obstacleProbability)
-                return ObstacleType.None;
+            if (r < Mathf.Lerp(0.85f, 0.65f, p))
+                return ObstacleType.SlideOnly;
 
-            bool spawnHard = Random.value < hardChance;
-
-            return spawnHard
-                ? (Random.value < 0.5f ? ObstacleType.SlideOnly : ObstacleType.SlideOrJump)
-                : ObstacleType.JumpOnly;
+            return ObstacleType.SlideOrJump;
         }
 
         private bool IsRepeatingType(ObstacleType type)
         {
-            if (type == ObstacleType.None || lastObstacleHistory.Count < historyLimit) return false;
+            if (lastObstacleHistory.Count < 2)
+                return false;
 
-            foreach (ObstacleType t in lastObstacleHistory)
-            {
-                if (t != type) return false;
-            }
+            ObstacleType[] arr = lastObstacleHistory.ToArray();
+            int n = arr.Length;
 
-            return true;
+            return arr[n - 1] == type && arr[n - 2] == type;
         }
 
         private void AddObstacleHistory(ObstacleType type)
