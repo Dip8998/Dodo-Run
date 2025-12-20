@@ -2,6 +2,7 @@
 using DodoRun.Main;
 using DodoRun.Player;
 using DodoRun.PowerUps;
+using DodoRun.Data;
 
 namespace DodoRun.Tutorial
 {
@@ -21,6 +22,13 @@ namespace DodoRun.Tutorial
 
         public void StartTutorial()
         {
+            if (PlayerDataService.IsTutorialCompleted)
+            {
+                IsActive = false;
+                CurrentState = TutorialState.Finished;
+                return;
+            }
+
             game = GameService.Instance;
             player = game.PlayerService.GetPlayerController();
 
@@ -137,6 +145,8 @@ namespace DodoRun.Tutorial
             IsActive = false;
             CurrentState = TutorialState.Finished;
             inputGate.EnableAll();
+
+            PlayerDataService.MarkTutorialCompleted();
         }
 
         public bool CanProcessSwipe(Vector2 direction)

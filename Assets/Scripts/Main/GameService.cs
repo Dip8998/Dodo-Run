@@ -9,6 +9,8 @@ using DodoRun.Tutorial;
 using DodoRun.Event;
 using DodoRun.Utilities;
 using TMPro;
+using DodoRun.Data;
+using System.Collections;
 
 namespace DodoRun.Main
 {
@@ -24,7 +26,7 @@ namespace DodoRun.Main
         public EventService EventService { get; private set; }
         public DifficultyManager Difficulty { get; private set; }
 
-        public bool IsGameRunning { get; private set; }
+        public bool IsGameRunning { get; set; }
 
         [Header("Config")]
         [SerializeField] private PlatformScriptableObject platformData;
@@ -51,6 +53,9 @@ namespace DodoRun.Main
         [Header("UI")]
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI multiplierText;
+
+        [Header("Game Over UI")]
+        [SerializeField] private GameObject gameOverPanel;
 
         private GameLoop gameLoop;
 
@@ -120,7 +125,20 @@ namespace DodoRun.Main
         public void GameOver()
         {
             if (!IsGameRunning) return;
+
             IsGameRunning = false;
+
+            int finalScore = ScoreService.TotalScore;
+            PlayerDataService.TrySetHighScore(finalScore);
+
+           StartCoroutine(SetActiveGameOverPanel());
+        }
+
+        IEnumerator SetActiveGameOverPanel()
+        {
+            yield return new WaitForSeconds(2f);
+            if (gameOverPanel != null)
+                gameOverPanel.SetActive(true);
         }
     }
 }

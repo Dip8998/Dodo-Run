@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using DodoRun.Main;
+using DodoRun.Data;
 
 namespace DodoRun.Coin
 {
@@ -41,6 +42,9 @@ namespace DodoRun.Coin
         {
             GameService.Instance.ScoreService.AddCoinScore(10);
             GameService.Instance.ScoreService.AddCoins(1);
+
+            PlayerDataService.AddCoins(1);
+
             GameService.Instance.EventService.OnCoinCollected.InvokeEvent(1);
 
             Deactivate();
