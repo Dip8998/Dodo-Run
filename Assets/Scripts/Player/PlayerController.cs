@@ -155,6 +155,9 @@ namespace DodoRun.Player
 
         private void ProcessSwipe()
         {
+            if (stateMachine.CurrentState is PlayerDeadState)
+                return;
+
             Vector2 delta = touchEnd - touchStart;
             float distance = delta.magnitude;
             if (distance < MinSwipeDistance) return;
@@ -162,7 +165,11 @@ namespace DodoRun.Player
             float elapsed = Time.time - touchStartTime;
             if (elapsed <= 0f) return;
 
-            if (distance / elapsed < MinSwipeSpeed) return;
+            float difficultyFactor =
+                Mathf.Lerp(1f, 0.65f, game.Difficulty.Progress);
+
+            if ((distance / elapsed) < MinSwipeSpeed * difficultyFactor)
+                return;
 
             Vector2 dir = delta.normalized;
 
@@ -179,13 +186,16 @@ namespace DodoRun.Player
             else if (Vector2.Dot(dir, Vector2.down) > DirectionThreshold)
                 stateMachine.ChangeState(PlayerState.ROLLING);
 
-            CanAcceptInput = false;
             game.StartCoroutine(InputCooldown());
         }
 
         private IEnumerator InputCooldown()
         {
-            yield return new WaitForSeconds(0.1f);
+            float cooldown =
+                Mathf.Lerp(0.1f, 0.04f, game.Difficulty.Progress);
+
+            yield return new WaitForSeconds(cooldown);
+
             if (!IsSliding && stateMachine.CurrentState is not PlayerDeadState)
                 CanAcceptInput = true;
         }
