@@ -50,10 +50,6 @@ namespace DodoRun.Main
         [Header("Difficulty")]
         [SerializeField] private DifficultySettings difficultySettings;
 
-        [Header("UI")]
-        [SerializeField] private TextMeshProUGUI scoreText;
-        [SerializeField] private TextMeshProUGUI multiplierText;
-
         [Header("Game Over UI")]
         [SerializeField] private GameObject gameOverPanel;
 
@@ -77,7 +73,6 @@ namespace DodoRun.Main
             PlayerService = new PlayerService(playerData);
 
             ScoreService = new ScoreService();
-            ScoreService.Initialize(scoreText, multiplierText);
 
             ObstacleService = new ObstacleService(
                 jumpObstacle,

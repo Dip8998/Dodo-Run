@@ -1,50 +1,48 @@
 ﻿using UnityEngine;
-using DodoRun.Main;
 
 namespace DodoRun.Camera
 {
-    public sealed class CameraController : MonoBehaviour
+    public sealed class CameraController
     {
-        [SerializeField] private Vector3 playerOffset = new(0f, 2.2f, -4.8f);
-        [SerializeField] private float followSmoothness = 0.08f;
-        [SerializeField] private float rotationSmoothness = 8f;
-
+        private readonly Transform camera;
         private Transform target;
-        private Transform cachedTransform;
         private Vector3 velocity;
-        private Quaternion forwardRotation;
+        private readonly Vector3 offset;
+        private readonly float followSmooth;
+        private readonly float rotationSmooth;
+        private readonly Quaternion forwardRotation;
 
-        private void Awake()
+        public CameraController(
+            Transform camera,
+            Vector3 offset,
+            float followSmooth,
+            float rotationSmooth)
         {
-            cachedTransform = transform;
+            this.camera = camera;
+            this.offset = offset;
+            this.followSmooth = followSmooth;
+            this.rotationSmooth = rotationSmooth;
             forwardRotation = Quaternion.LookRotation(Vector3.forward);
-
-            GameService.Instance.EventService.OnPlayerSpawned.AddListner(Bind);
         }
 
-        private void OnDestroy()
-        {
-            GameService.Instance?.EventService?.OnPlayerSpawned.RemoveListner(Bind);
-        }
+        public void Bind(Transform target) => this.target = target;
 
-        private void LateUpdate()
+        public void Tick()
         {
             if (target == null) return;
 
-            cachedTransform.position = Vector3.SmoothDamp(
-                cachedTransform.position,
-                target.position + playerOffset,
+            camera.position = Vector3.SmoothDamp(
+                camera.position,
+                target.position + offset,
                 ref velocity,
-                followSmoothness
+                followSmooth
             );
 
-            cachedTransform.rotation = Quaternion.Slerp(
-                cachedTransform.rotation,
+            camera.rotation = Quaternion.Slerp(
+                camera.rotation,
                 forwardRotation,
-                rotationSmoothness * Time.deltaTime
+                rotationSmooth * Time.deltaTime
             );
         }
-
-        private void Bind(Transform player) => target = player;
     }
 }

@@ -13,7 +13,6 @@ namespace DodoRun.Obstacle
 
         public ObstacleController GetObstacle(ObstacleView prefab, Vector3 spawnPos, Transform parent)
         {
-            // ensure pool exists
             if (!pools.ContainsKey(prefab))
             {
                 pools[prefab] = new List<ObstacleController>();

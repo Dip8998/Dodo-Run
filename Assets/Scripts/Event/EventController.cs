@@ -1,49 +1,54 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace DodoRun.Event
 {
-    public class EventController<T>
+    public sealed class EventController<T>
     {
-        private readonly List<Action<T>> listeners = new List<Action<T>>();
-
-        public void InvokeEvent(T param)
-        {
-            for (int i = 0; i < listeners.Count; i++)
-                listeners[i]?.Invoke(param);
-        }
+        private Action<T> listeners;
 
         public void AddListner(Action<T> action)
         {
-            if (!listeners.Contains(action))
-                listeners.Add(action);
+            listeners += action;
         }
 
         public void RemoveListner(Action<T> action)
         {
-            listeners.Remove(action);
+            listeners -= action;
+        }
+
+        public void InvokeEvent(T param)
+        {
+            listeners?.Invoke(param);
+        }
+
+        public void Clear()
+        {
+            listeners = null;
         }
     }
 
-    public class EventController<T1,T2>
+    public sealed class EventController<T1, T2>
     {
-        private readonly List<Action<T1,T2>> listeners = new List<Action<T1,T2>>();
+        private Action<T1, T2> listeners;
 
-        public void InvokeEvent(T1 param1, T2 param2)
+        public void AddListner(Action<T1, T2> action)
         {
-            for (int i = 0; i < listeners.Count; i++)
-                listeners[i]?.Invoke(param1,param2);
+            listeners += action;
         }
 
-        public void AddListner(Action<T1,T2> action)
+        public void RemoveListner(Action<T1, T2> action)
         {
-            if (!listeners.Contains(action))
-                listeners.Add(action);
+            listeners -= action;
         }
 
-        public void RemoveListner(Action<T1,T2> action)
+        public void InvokeEvent(T1 a, T2 b)
         {
-            listeners.Remove(action);
+            listeners?.Invoke(a, b);
+        }
+
+        public void Clear()
+        {
+            listeners = null;
         }
     }
 }
