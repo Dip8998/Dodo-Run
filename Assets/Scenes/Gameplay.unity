@@ -194,7 +194,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 100}
+  m_SizeDelta: {x: 250, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &31043012
 MonoBehaviour:
@@ -1111,7 +1111,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 149.9, y: 0}
+  m_AnchoredPosition: {x: 180.8, y: 0}
   m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &288799247
@@ -1191,7 +1191,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 100}
+  m_SizeDelta: {x: 250, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &314200335
 MonoBehaviour:
@@ -1464,15 +1464,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   platformData: {fileID: 11400000, guid: 79dd5f8b199391145b00d6cecc11eb9c, type: 2}
   playerData: {fileID: 11400000, guid: 49d94bfb22d568f4e98f3e97e8f60075, type: 2}
-  jumpObstacle: {fileID: 7388540785502154138, guid: f915f6ceed23c9047a4a16bb01ca7de4, type: 3}
-  slideObstacle: {fileID: 2729830559547779886, guid: c62bc169d8b00a344b346f0c7f34ce39, type: 3}
-  slideOrJumpObstacle: {fileID: -8570173174595304936, guid: 4123c4341a5bfb745ae731f9c277f767, type: 3}
-  trainObstacle: {fileID: -7621239499198444678, guid: 599a51b8b58ae7748802677726621036, type: 3}
-  coinPrefab: {fileID: 3472038728655094765, guid: bddde96586ad17d4490632b9a89409b2, type: 3}
-  coinVerticalOffset: 0.5
-  magnet: {fileID: 2297100979355476332, guid: 2be381f789caf5945a356e4771772c7b, type: 3}
-  shield: {fileID: 8707343121001148180, guid: 8e5ebeb1e42825a4cba8df7da2393e19, type: 3}
-  doubleScore: {fileID: 5709027787372200936, guid: f42db8eb739fcab45979cd8b9846652e, type: 3}
   difficultySettings:
     StartObstacleProbability: 5
     MaxObstacleProbability: 20
@@ -2509,7 +2500,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 149.9, y: 0}
+  m_AnchoredPosition: {x: 180.8, y: 0}
   m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &996295285
@@ -2705,7 +2696,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 149.9, y: 0}
+  m_AnchoredPosition: {x: 180.8, y: 0}
   m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1194019945
@@ -2980,7 +2971,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 100}
+  m_SizeDelta: {x: 250, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1242325799
 CanvasRenderer:
@@ -3570,7 +3561,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1598254020}
-  - component: {fileID: 1598254022}
+  - component: {fileID: 1598254021}
   m_Layer: 5
   m_Name: PowerupBars
   m_TagString: Untagged
@@ -3597,10 +3588,10 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 269.14377, y: 559.8113}
+  m_AnchoredPosition: {x: 120, y: 560}
   m_SizeDelta: {x: 100, y: 324}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1598254022
+--- !u!114 &1598254021
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3616,8 +3607,8 @@ MonoBehaviour:
     m_Left: 0
     m_Right: 0
     m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 2
+    m_Bottom: 100
+  m_ChildAlignment: 0
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlayerSO
   m_EditorClassIdentifier: 
   Player: {fileID: 4465064410697678996, guid: ee2246a083b374c45ae2b6277ea140d4, type: 3}
-  SpawnPosition: {x: 0, y: 0.25, z: -8}
+  SpawnPosition: {x: 0, y: 1, z: -7}
   GroundCheckRadius: 0.08
   GroundLayer:
     serializedVersion: 2
@@ -27,26 +27,26 @@ MonoBehaviour:
     - serializedVersion: 3
       time: -0.0000010174699
       value: 0
-      inSlope: 2.0007615
-      outSlope: 2.0007615
+      inSlope: 1.3426439
+      outSlope: 1.3426439
       tangentMode: 34
       weightedMode: 0
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 0.50010467
-      value: 1.0005922
-      inSlope: 0.0007972717
-      outSlope: 0.0007972717
+      time: 0.7493646
+      value: 1.0061312
+      inSlope: 0.0016488433
+      outSlope: 0.0016488433
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1.000541
-      value: 0.00013650407
-      inSlope: -1.999167
-      outSlope: -1.999167
+      time: 1.5003195
+      value: 0.00034262612
+      inSlope: -1.3393462
+      outSlope: -1.3393462
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334

@@ -52,6 +52,13 @@ namespace DodoRun.UI.Controllers
             events.OnPowerupExpired.RemoveListner(OnExpired);
         }
 
+        public void Update(float value)
+        {
+            magnet.Update(value);
+            shield.Update(value);
+            doubleScore.Update(value);
+        }
+
         private sealed class PowerupBar
         {
             private readonly UnityEngine.UI.Slider slider;

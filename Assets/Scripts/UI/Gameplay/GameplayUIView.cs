@@ -34,6 +34,11 @@ namespace DodoRun.UI
             scoreUI.Dispose();
             powerupUI.Dispose();
         }
+
+        private void Update()
+        {
+            powerupUI.Update(Time.unscaledDeltaTime);
+        }
     }
 
     [System.Serializable]

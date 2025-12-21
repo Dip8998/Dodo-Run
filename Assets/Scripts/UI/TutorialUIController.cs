@@ -13,7 +13,7 @@ namespace DodoRun.UI
         [SerializeField] private float visibleDuration = 3.5f;
 
         private TutorialService tutorial;
-        private TutorialState lastState;
+        private TutorialState lastState = TutorialState.None;
         private float timer;
         private bool visible;
         private PowerupType lastPowerup;
@@ -21,14 +21,20 @@ namespace DodoRun.UI
         private void Start()
         {
             tutorial = GameService.Instance.TutorialService;
-            panel.SetActive(false);
+            if (panel != null) panel.SetActive(false);
         }
 
         private void Update()
         {
-            if (tutorial == null || !tutorial.IsActive)
+            if (tutorial == null)
             {
-                panel.SetActive(false);
+                tutorial = GameService.Instance.TutorialService;
+                return;
+            }
+
+            if (!tutorial.IsActive)
+            {
+                if (panel.activeSelf) panel.SetActive(false);
                 return;
             }
 
@@ -37,10 +43,8 @@ namespace DodoRun.UI
                 lastState = tutorial.CurrentState;
                 Show();
             }
-            else if (
-                tutorial.CurrentState == TutorialState.MagnetIntro &&
-                tutorial.ActiveTutorialPowerup != lastPowerup
-            )
+            else if (tutorial.CurrentState == TutorialState.MagnetIntro &&
+                     tutorial.ActiveTutorialPowerup != lastPowerup)
             {
                 Show();
             }
@@ -57,11 +61,13 @@ namespace DodoRun.UI
 
         private void Show()
         {
+            if (lastState == TutorialState.None || lastState == TutorialState.Finished) return;
+
             timer = 0f;
             visible = true;
             panel.SetActive(true);
 
-            lastPowerup = tutorial.ActiveTutorialPowerup; 
+            lastPowerup = tutorial.ActiveTutorialPowerup;
             instructionText.text = GetText(lastState);
         }
 
@@ -72,40 +78,11 @@ namespace DodoRun.UI
 
             string[] options = state switch
             {
-                TutorialState.Welcome => new[]
-                {
-                    "Welcome to Dodo Run\nGet Ready!",
-                    "Welcome!\nYour Run Starts Now",
-                    "Welcome to Dodo Run\nSwipe to Survive"
-                },
-
-                TutorialState.TrainSwipe => new[]
-                {
-                    "Train Ahead!\nSwipe Left or Right",
-                    "Avoid the Train\nSwipe Left or Right",
-                    "Move Fast!\nSwipe Left or Right"
-                },
-
-                TutorialState.JumpOnly => new[]
-                {
-                    "Jump Over the Obstacle\nSwipe Up",
-                    "Jump!\nSwipe Up to Avoid"
-                },
-
-                TutorialState.SlideOnly => new[]
-                {
-                    "Slide Under the Obstacle\nSwipe Down",
-                    "Slide!\nSwipe Down to Avoid"
-                },
-
-
-                TutorialState.CoinTrail => new[]
-                {
-                    "Collect Coins\nIncrease Your Score",
-                    "Grab Coins\nScore Goes Up",
-                    "Coins Ahead\nCollect Them All"
-                },
-
+                TutorialState.Welcome => new[] { "Welcome to Dodo Run\nGet Ready!", "Your Run Starts Now" },
+                TutorialState.TrainSwipe => new[] { "Train Ahead!\nSwipe Left or Right" },
+                TutorialState.JumpOnly => new[] { "Jump Over!\nSwipe Up" },
+                TutorialState.SlideOnly => new[] { "Slide Under!\nSwipe Down" },
+                TutorialState.CoinTrail => new[] { "Collect Coins! and Increase your score" },
                 _ => new[] { string.Empty }
             };
 
@@ -114,18 +91,12 @@ namespace DodoRun.UI
 
         private string GetPowerupText()
         {
-            return tutorial.ActiveTutorialPowerup switch
+            return lastPowerup switch
             {
-                PowerupType.Magnet =>
-                    "Magnet Power!\nCoins Fly to You",
-
-                PowerupType.Shield =>
-                    "Shield Active!\nYou’re Safe from Obstacles",
-
-                PowerupType.DoubleScore =>
-                    "Double Score!\nEarn Points Faster",
-
-                _ => string.Empty
+                PowerupType.Magnet => "Magnet Power!\nCoins Fly to You",
+                PowerupType.Shield => "Shield Active!\nYou’re Safe",
+                PowerupType.DoubleScore => "Double Score!\nEarn Faster",
+                _ => "Powerup Collected!"
             };
         }
     }

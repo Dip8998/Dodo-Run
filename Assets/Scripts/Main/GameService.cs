@@ -32,21 +32,6 @@ namespace DodoRun.Main
         [SerializeField] private PlatformScriptableObject platformData;
         [SerializeField] private PlayerScriptableObject playerData;
 
-        [Header("Obstacle Prefabs")]
-        [SerializeField] private ObstacleView jumpObstacle;
-        [SerializeField] private ObstacleView slideObstacle;
-        [SerializeField] private ObstacleView slideOrJumpObstacle;
-        [SerializeField] private ObstacleView trainObstacle;
-
-        [Header("Coin")]
-        [SerializeField] private CoinView coinPrefab;
-        [SerializeField] private float coinVerticalOffset = 0.5f;
-
-        [Header("Powerups")]
-        [SerializeField] private PowerupView magnet;
-        [SerializeField] private PowerupView shield;
-        [SerializeField] private PowerupView doubleScore;
-
         [Header("Difficulty")]
         [SerializeField] private DifficultySettings difficultySettings;
 
@@ -58,51 +43,46 @@ namespace DodoRun.Main
         protected override void Awake()
         {
             base.Awake();
-
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 0;
 
-            Bootstrap();
+            StartCoroutine(InitializeAsync());
         }
 
-        private void Bootstrap()
+        private IEnumerator InitializeAsync()
         {
+            IsGameRunning = false; 
+
             EventService = new EventService();
             Difficulty = new DifficultyManager(difficultySettings);
-
             PlayerService = new PlayerService(playerData);
-
             ScoreService = new ScoreService();
 
-            ObstacleService = new ObstacleService(
-                jumpObstacle,
-                slideObstacle,
-                slideOrJumpObstacle,
-                trainObstacle
-            );
+            ObstacleService = new ObstacleService();
+            CoinService = new CoinService(0.5f);
+            PowerupService = new PowerupService();
 
-            CoinService = new CoinService(
-                coinPrefab,
-                coinVerticalOffset
-            );
+            var obstacleTask = ObstacleService.PreloadAssets();
+            var coinTask = CoinService.Initialize();
+            var powerupTask = PowerupService.Initialize();
 
-            PowerupService = new PowerupService(
-                magnet,
-                shield,
-                doubleScore
-            );
+            while (!obstacleTask.IsCompleted || !coinTask.IsCompleted || !powerupTask.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (obstacleTask.IsFaulted || coinTask.IsFaulted)
+            {
+                Debug.LogError("Critical Error: Addressables failed to load. Check console for details.");
+                yield break;
+            }
 
             TutorialService = new TutorialService();
-            TutorialService.StartTutorial();
-
-            PlatformService = new PlatformService(
-                platformData,
-                platformData.spawnPosition
-            );
-
+            PlatformService = new PlatformService(platformData, platformData.spawnPosition);
             gameLoop = new GameLoop(this);
 
             IsGameRunning = true;
+            TutorialService.StartTutorial();
         }
 
         private void Update()

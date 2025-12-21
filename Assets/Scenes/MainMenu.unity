@@ -505,7 +505,7 @@ MonoBehaviour:
   coinText: {fileID: 1499056085}
   bestScoreText: {fileID: 1424452276}
   playButton: {fileID: 536159324}
-  quitButton: {fileID: 0}
+  quitButton: {fileID: 1125552902}
   gameplaySceneName: Gameplay
 --- !u!1 &536159320
 GameObject:

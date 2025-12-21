@@ -1,31 +1,34 @@
 ﻿using System.Collections.Generic;
-using DodoRun.Main;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using System.Threading.Tasks;
+using DodoRun.Main;
 
 namespace DodoRun.Coin
 {
     public class CoinService
     {
-        public CoinView CoinPrefab { get; private set; }
+        private const string COIN_ADDRESS = "Entity_Coin";
+        private CoinPool coinPool;
+        private readonly List<CoinController> activeCoins = new();
         public float BaseVerticalOffset { get; private set; }
-
-        private readonly CoinPool coinPool;
-        private readonly List<CoinController> activeCoins = new List<CoinController>();
-
-        private Transform playerTransform;
-        private readonly float despawnDistance = 5f;
-
         public IReadOnlyList<CoinController> ActiveCoins => activeCoins;
 
-        public CoinService(CoinView coinPrefab, float verticalOffset)
+        public CoinService(float verticalOffset)
         {
-            CoinPrefab = coinPrefab;
             BaseVerticalOffset = verticalOffset;
-            coinPool = new CoinPool(CoinPrefab);
+        }
+
+        public async Task Initialize()
+        {
+            var handle = Addressables.LoadAssetAsync<GameObject>(COIN_ADDRESS);
+            await handle.Task;
+            coinPool = new CoinPool(handle.Result.GetComponent<CoinView>());
         }
 
         public CoinController GetCoin(Vector3 spawnPos)
         {
+            if (coinPool == null) return null;
             CoinController coinController = coinPool.GetCoin(spawnPos);
             activeCoins.Add(coinController);
             return coinController;
@@ -34,67 +37,28 @@ namespace DodoRun.Coin
         public void ReturnCoinToPool(CoinController coinController)
         {
             if (coinController == null) return;
-
-            if (activeCoins.Contains(coinController))
-            {
-                activeCoins.Remove(coinController);
-            }
-
+            activeCoins.Remove(coinController);
             coinPool.ReturnCoinToPool(coinController);
-        }
-
-        public void ClearAllActiveCoins()
-        {
-            for (int i = activeCoins.Count - 1; i >= 0; i--)
-            {
-                activeCoins[i].Deactivate();
-            }
-
-            activeCoins.Clear();
         }
 
         public void UpdateCoins()
         {
-            if (!GameService.Instance.IsGameRunning)
-                return;
-
-            if (playerTransform == null)
-            {
-                playerTransform = GameService.Instance.PlayerService.GetPlayerTransform();
-                if (playerTransform == null)
-                    return;
-            }
+            if (!GameService.Instance.IsGameRunning) return;
+            var player = GameService.Instance.PlayerService.GetPlayerTransform();
+            if (player == null) return;
 
             float speed = GameService.Instance.Difficulty.CurrentSpeed;
             Vector3 delta = Vector3.back * speed * Time.deltaTime;
 
-            float playerZ = playerTransform.position.z;
-
             for (int i = activeCoins.Count - 1; i >= 0; i--)
             {
-                CoinController coin = activeCoins[i];
-                CoinView view = coin.CoinView;
-
-                if (view == null || !view.gameObject.activeInHierarchy)
-                {
-                    activeCoins.RemoveAt(i);
-                    continue;
-                }
-
-                view.transform.position += delta;
-
-                if (view.transform.position.z < playerZ - despawnDistance)
-                {
+                var coin = activeCoins[i];
+                coin.CoinView.transform.position += delta;
+                if (coin.CoinView.transform.position.z < player.position.z - 5f)
                     coin.Deactivate();
-                }
             }
         }
 
-        public void ReleaseAllMagnetCoins()
-        {
-            foreach (var c in ActiveCoins)
-                c.IsBeingPulled = false;
-        }
-
+        public void ReleaseAllMagnetCoins() => activeCoins.ForEach(c => c.IsBeingPulled = false);
     }
 }
