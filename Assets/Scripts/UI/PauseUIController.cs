@@ -24,7 +24,7 @@ namespace DodoRun.UI
             restartButton.onClick.AddListener(OnRestartClicked);
             homeButton.onClick.AddListener(OnHomeClicked);
 
-            gameObject.SetActive(false);
+            if (this.gameObject != null) this.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
@@ -39,16 +39,32 @@ namespace DodoRun.UI
             if (isPaused) return;
 
             isPaused = true;
-            gameObject.SetActive(true);
 
-            GameService.Instance.IsGameRunning = false;
+            if (this.gameObject != null)
+            {
+                this.gameObject.SetActive(true);
+                this.gameObject.transform.SetAsLastSibling();
+            }
+
+            if (GameService.Instance != null)
+            {
+                GameService.Instance.IsGameRunning = false;
+            }
+
             Time.timeScale = 0f;
+            Debug.Log("Pause UI: Panel should now be visible.");
         }
 
-        private void OnResumeClicked()
+        public void Resume()
         {
-            Resume();
+            isPaused = false;
+            if (this.gameObject != null) this.gameObject.SetActive(false); 
+
+            Time.timeScale = 1f;
+            GameService.Instance.IsGameRunning = true;
         }
+
+        private void OnResumeClicked() => Resume();
 
         private void OnRestartClicked()
         {
@@ -60,15 +76,6 @@ namespace DodoRun.UI
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene(mainMenuScene);
-        }
-
-        private void Resume()
-        {
-            isPaused = false;
-            gameObject.SetActive(false);
-
-            Time.timeScale = 1f;
-            GameService.Instance.IsGameRunning = true;
         }
     }
 }
