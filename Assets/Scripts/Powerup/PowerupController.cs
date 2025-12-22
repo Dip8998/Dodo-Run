@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using DodoRun.Main;
+using DodoRun.Sound;
 
 namespace DodoRun.PowerUps
 {
@@ -34,6 +35,7 @@ namespace DodoRun.PowerUps
 
         public void Collect()
         {
+            AudioManager.Instance.PlayEffect(SoundType.Powerup);
             GameService.Instance.PowerupService.ActivatePowerup(Type);
             Deactivate();
         }
@@ -41,7 +43,6 @@ namespace DodoRun.PowerUps
         public void Deactivate()
         {
             if (!isUsed) return;
-
             isUsed = false;
             View.gameObject.SetActive(false);
             GameService.Instance.PowerupService.ReturnToPool(this);

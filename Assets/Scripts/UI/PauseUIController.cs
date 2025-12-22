@@ -2,6 +2,7 @@
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using DodoRun.Main;
+using DodoRun.Sound;
 
 namespace DodoRun.UI
 {
@@ -57,6 +58,8 @@ namespace DodoRun.UI
 
         public void Resume()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
+            AudioManager.Instance.SetRunningSoundActive(false);
             isPaused = false;
             if (this.gameObject != null) this.gameObject.SetActive(false); 
 
@@ -68,12 +71,14 @@ namespace DodoRun.UI
 
         private void OnRestartClicked()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
             Time.timeScale = 1f;
             SceneManager.LoadScene(gameplayScene);
         }
 
         private void OnHomeClicked()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
             Time.timeScale = 1f;
             SceneManager.LoadScene(mainMenuScene);
         }

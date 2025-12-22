@@ -35,5 +35,14 @@ namespace DodoRun.Player
             CurrentState = states[state];
             CurrentState.OnStateEnter();
         }
+
+        public PlayerState GetCurrentStateEnum()
+        {
+            foreach (var entry in states)
+            {
+                if (entry.Value == CurrentState) return entry.Key;
+            }
+            return PlayerState.RUNNING;
+        }
     }
 }

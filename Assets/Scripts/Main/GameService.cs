@@ -26,6 +26,7 @@ namespace DodoRun.Main
         public EventService EventService { get; private set; }
         public DifficultyManager Difficulty { get; private set; }
 
+        public bool IsInitialized { get; private set; }
         public bool IsGameRunning { get; set; }
 
         [Header("Config")]
@@ -82,6 +83,7 @@ namespace DodoRun.Main
             gameLoop = new GameLoop(this);
 
             IsGameRunning = true;
+            IsInitialized = true;
             TutorialService.StartTutorial();
         }
 

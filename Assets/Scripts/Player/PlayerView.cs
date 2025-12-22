@@ -1,5 +1,6 @@
 using UnityEngine;
 using DodoRun.Main;
+using DodoRun.Sound;
 
 namespace DodoRun.Player
 {
@@ -29,6 +30,24 @@ namespace DodoRun.Player
 
             controller.Die();
             GameService.Instance.GameOver();
+        }
+
+        public void PlayFootstep()
+        {
+            if (!GameService.Instance.IsGameRunning || controller == null)
+            {
+                AudioManager.Instance.SetRunningSoundActive(false);
+                return;
+            }
+
+            if (controller.GetState() == PlayerState.RUNNING && controller.IsGrounded)
+            {
+                AudioManager.Instance.SetRunningSoundActive(true);
+            }
+            else
+            {
+                AudioManager.Instance.SetRunningSoundActive(false);
+            }
         }
     }
 }

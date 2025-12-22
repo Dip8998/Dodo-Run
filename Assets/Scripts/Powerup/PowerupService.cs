@@ -4,6 +4,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Threading.Tasks;
 using DodoRun.Main;
+using DodoRun.Sound;
 
 namespace DodoRun.PowerUps
 {
@@ -93,6 +94,7 @@ namespace DodoRun.PowerUps
             foreach (var type in expired)
             {
                 timers.Remove(type);
+                AudioManager.Instance.PlayEffect(SoundType.Powerdown);
                 GameService.Instance.EventService.OnPowerupExpired.InvokeEvent(type);
                 if (type == PowerupType.DoubleScore) GameService.Instance.ScoreService.DeactivateDoubleScore();
                 if (type == PowerupType.Shield) GameService.Instance.ObstacleService.EnableAllObstacleCollisions();

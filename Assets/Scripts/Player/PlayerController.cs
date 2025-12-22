@@ -3,6 +3,7 @@ using UnityEngine;
 using DodoRun.Main;
 using DodoRun.Coin;
 using DodoRun.Tutorial;
+using DodoRun.Sound;
 
 namespace DodoRun.Player
 {
@@ -85,8 +86,6 @@ namespace DodoRun.Player
 
             if (game.PowerupService?.IsMagnetActive == true)
                 AttractCoins();
-
-            PlayerAnimator.speed = Mathf.Lerp(1f, 1.75f, game.Difficulty.Progress);
         }
 
         public void FixedUpdatePlayer()
@@ -109,6 +108,10 @@ namespace DodoRun.Player
         public void Die()
         {
             if (stateMachine.CurrentState is PlayerDeadState) return;
+
+            AudioManager.Instance.SetRunningSoundActive(false);
+
+            AudioManager.Instance.PlayEffect(SoundType.ObstacleHit);
             stateMachine.ChangeState(PlayerState.DEAD);
         }
 
@@ -143,13 +146,21 @@ namespace DodoRun.Player
 
             if (touch.phase == TouchPhase.Began)
             {
+                if (touch.position.y > Screen.height * 0.5f)
+                {
+                    touchStartTime = -1f;
+                    return;
+                }
                 touchStartTime = Time.time;
                 touchStart = touch.position;
             }
             else if (touch.phase == TouchPhase.Ended)
             {
-                touchEnd = touch.position;
-                ProcessSwipe();
+                if (touchStartTime != -1f)
+                {
+                    touchEnd = touch.position;
+                    ProcessSwipe();
+                }
             }
         }
 
@@ -178,14 +189,29 @@ namespace DodoRun.Player
                 return;
 
             if (Vector2.Dot(dir, Vector2.right) > DirectionThreshold)
+            {
+                AudioManager.Instance.SetRunningSoundActive(false);
+                AudioManager.Instance.PlayEffect(SoundType.Swipe);
                 stateMachine.ChangeState(PlayerState.RIGHT_SWIPE);
+            }
             else if (Vector2.Dot(dir, Vector2.left) > DirectionThreshold)
+            {
+                AudioManager.Instance.SetRunningSoundActive(false);
+                AudioManager.Instance.PlayEffect(SoundType.Swipe);
                 stateMachine.ChangeState(PlayerState.LEFT_SWIPE);
+            }
             else if (Vector2.Dot(dir, Vector2.up) > DirectionThreshold && IsJumpAllowed())
+            {
+                AudioManager.Instance.SetRunningSoundActive(false);
+                AudioManager.Instance.PlayEffect(SoundType.Jump);
                 stateMachine.ChangeState(PlayerState.JUMP);
+            }
             else if (Vector2.Dot(dir, Vector2.down) > DirectionThreshold)
+            {
+                AudioManager.Instance.SetRunningSoundActive(false);
+                AudioManager.Instance.PlayEffect(SoundType.Slide);
                 stateMachine.ChangeState(PlayerState.ROLLING);
-
+            }
             game.StartCoroutine(InputCooldown());
         }
 
@@ -198,6 +224,11 @@ namespace DodoRun.Player
 
             if (!IsSliding && stateMachine.CurrentState is not PlayerDeadState)
                 CanAcceptInput = true;
+        }
+
+        public PlayerState GetState()
+        {
+            return stateMachine.GetCurrentStateEnum();
         }
 
         private bool IsJumpAllowed()

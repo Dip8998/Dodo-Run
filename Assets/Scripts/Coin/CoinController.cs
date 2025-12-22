@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using DodoRun.Main;
 using DodoRun.Data;
+using DodoRun.Sound;
 
 namespace DodoRun.Coin
 {
@@ -46,7 +47,7 @@ namespace DodoRun.Coin
             PlayerDataService.AddCoins(1);
 
             GameService.Instance.EventService.OnCoinCollected.InvokeEvent(1);
-
+            AudioManager.Instance.PlayEffect(SoundType.CoinCollect);
             Deactivate();
         }
 

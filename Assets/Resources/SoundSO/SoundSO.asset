@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5000b57383e62134681f14ec005722a3, type: 3}
+  m_Name: SoundSO
+  m_EditorClassIdentifier: 
+  Music: {fileID: 8300000, guid: c0b5e5c4b61b9084dae20677bb0f01d8, type: 3}
+  ButtonClick: {fileID: 8300000, guid: eb3a4c1e50435964fa9e3c8a1bec21a4, type: 3}
+  RunningSound: {fileID: 8300000, guid: bb7e41f2e72c06c4290d7f5d4901a4b4, type: 3}
+  JumpSound: {fileID: 8300000, guid: 3264546ad71233e4b885739aac6eb6b3, type: 3}
+  SwipeSound: {fileID: 8300000, guid: 6274877990f32e04689ed9607a3731a6, type: 3}
+  SlideSound: {fileID: 8300000, guid: 90c697f43e1dd6d4aabf35724e8c84e6, type: 3}
+  CoinCollect: {fileID: 8300000, guid: 5d40d18507952c14abe96bd96b2c23b2, type: 3}
+  Powerup: {fileID: 8300000, guid: e153e3458aedb9f439b470aff2678ada, type: 3}
+  Powerdown: {fileID: 8300000, guid: 0c567b7f9dda25141be871ebf611a80c, type: 3}
+  ObstacleHit: {fileID: 8300000, guid: aca77bbeeeac8c04380ff2e546918fa0, type: 3}
+  MagnetCoinCollect: {fileID: 8300000, guid: 00ffc629f43b62b4dadeeac3a05fbe86, type: 3}

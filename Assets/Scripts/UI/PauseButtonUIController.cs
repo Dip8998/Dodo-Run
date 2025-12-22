@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using DodoRun.Main;
+using DodoRun.Sound;
 
 namespace DodoRun.UI
 {
@@ -11,9 +12,19 @@ namespace DodoRun.UI
 
         private void Start()
         {
+            pauseButton.interactable = false;
+
             if (pauseButton != null)
             {
                 pauseButton.onClick.AddListener(OnPauseClicked);
+            }
+        }
+
+        private void Update()
+        {
+            if (!pauseButton.interactable && GameService.Instance != null && GameService.Instance.IsInitialized)
+            {
+                pauseButton.interactable = true;
             }
         }
 
@@ -27,14 +38,15 @@ namespace DodoRun.UI
 
         public void OnPauseClicked()
         {
-            if (GameService.Instance != null && GameService.Instance.IsGameRunning)
-            {
-                pauseUI.Pause();
-            }
-            else
+            if (GameService.Instance == null || !GameService.Instance.IsInitialized)
             {
                 Debug.LogWarning("Pause clicked but Game is not running yet (Loading Assets...)");
+                return;
             }
+
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
+            AudioManager.Instance.SetRunningSoundActive(false);
+            pauseUI.Pause();
         }
     }
 }

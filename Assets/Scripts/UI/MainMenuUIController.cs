@@ -1,4 +1,5 @@
 ﻿using DodoRun.Data;
+using DodoRun.Sound;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -8,10 +9,12 @@ namespace DodoRun.UI
 {
     public sealed class MainMenuUIController : MonoBehaviour
     {
+        [SerializeField] private GameObject settingMenu;
         [SerializeField] private TextMeshProUGUI coinText;
         [SerializeField] private TextMeshProUGUI bestScoreText;
         [SerializeField] private Button playButton;
         [SerializeField] private Button quitButton;
+        [SerializeField] private Button settingButton;
 
         [Header("Scene")]
         [SerializeField] private string gameplaySceneName = "Gameplay";
@@ -20,6 +23,7 @@ namespace DodoRun.UI
         {
             playButton.onClick.AddListener(OnPlayButtonClicked);
             quitButton.onClick.AddListener(OnQuitButtonClicked);
+            settingButton.onClick.AddListener(OnSettingButtonClicked);
         }
 
         private void OnEnable()
@@ -35,12 +39,20 @@ namespace DodoRun.UI
 
         private void OnPlayButtonClicked()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
             SceneManager.LoadScene(gameplaySceneName);
         }
 
         private void OnQuitButtonClicked()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
             Application.Quit();
+        }
+
+        private void OnSettingButtonClicked()
+        {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
+            settingMenu.SetActive(true);
         }
     }
 }

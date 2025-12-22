@@ -1,5 +1,6 @@
 ﻿using DodoRun.Data;
 using DodoRun.Main;
+using DodoRun.Sound;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -47,11 +48,13 @@ namespace DodoRun.UI
 
         private void OnHomeClicked()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
             SceneManager.LoadScene(mainMenuScene);
         }
 
         private void OnRetryClicked()
         {
+            AudioManager.Instance.PlayEffect(SoundType.ButtonClick);
             SceneManager.LoadScene(gameplayScene);
         }
     }
