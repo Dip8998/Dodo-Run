@@ -36,13 +36,22 @@ namespace DodoRun.Player
         private float lastGroundedTime;
         private float laneVelocity;
 
-        private bool isJumping;
+        private Vector2 bufferedSwipe;
+        private float bufferTimer;
+
+        private const float BASE_LANE_SMOOTH = 0.08f;
+        private const float FAST_LANE_SMOOTH = 0.035f;
+
+        private const float BASE_JUMP_DURATION = 0.75f;
+        private const float FAST_JUMP_DURATION = 0.45f;
+
+        private const float LANE_SNAP_THRESHOLD = 0.05f;
+        private const float INPUT_BUFFER_TIME = 0.15f;
 
         private const float MinSwipeDistance = 80f;
         private const float MinSwipeSpeed = 300f;
         private const float DirectionThreshold = 0.9f;
 
-        private readonly float jumpDuration = 0.75f;
         private readonly float jumpHeight = 1.7f;
 
         public PlayerController(PlayerScriptableObject data)
@@ -82,6 +91,7 @@ namespace DodoRun.Player
         public void UpdatePlayer()
         {
             HandleInput();
+            ProcessBufferedInput();
             stateMachine.Update();
 
             if (game.PowerupService?.IsMagnetActive == true)
@@ -98,9 +108,21 @@ namespace DodoRun.Player
             float targetX = CurrentLane * PlayerScriptableObject.LaneOffset;
             Vector3 pos = transform.position;
 
-            pos.x = IsGrounded && !isJumping
-                ? Mathf.SmoothDamp(pos.x, targetX, ref laneVelocity, 0.08f)
-                : Mathf.Lerp(pos.x, targetX, Time.deltaTime * 7f);
+            float smoothTime = Mathf.Lerp(
+                BASE_LANE_SMOOTH,
+                FAST_LANE_SMOOTH,
+                game.Difficulty.Progress
+            );
+
+            pos.x = Mathf.SmoothDamp(
+                pos.x,
+                targetX,
+                ref laneVelocity,
+                smoothTime
+            );
+
+            if (Mathf.Abs(pos.x - targetX) < LANE_SNAP_THRESHOLD)
+                pos.x = targetX;
 
             transform.position = pos;
         }
@@ -140,7 +162,7 @@ namespace DodoRun.Player
 
         private void HandleInput()
         {
-            if (!CanAcceptInput || Input.touchCount != 1) return;
+            if (Input.touchCount != 1) return;
 
             Touch touch = Input.GetTouch(0);
 
@@ -151,38 +173,39 @@ namespace DodoRun.Player
                     touchStartTime = -1f;
                     return;
                 }
+
                 touchStartTime = Time.time;
                 touchStart = touch.position;
             }
             else if (touch.phase == TouchPhase.Ended)
             {
-                if (touchStartTime != -1f)
-                {
-                    touchEnd = touch.position;
-                    ProcessSwipe();
-                }
+                if (touchStartTime == -1f) return;
+
+                touchEnd = touch.position;
+                Vector2 delta = touchEnd - touchStart;
+
+                if (delta.magnitude < MinSwipeDistance) return;
+
+                float elapsed = Time.time - touchStartTime;
+                if (elapsed <= 0f) return;
+
+                if ((delta.magnitude / elapsed) < MinSwipeSpeed) return;
+
+                bufferedSwipe = delta.normalized;
+                bufferTimer = INPUT_BUFFER_TIME;
             }
         }
 
-        private void ProcessSwipe()
+        private void ProcessBufferedInput()
         {
-            if (stateMachine.CurrentState is PlayerDeadState)
+            if (bufferTimer <= 0f) return;
+
+            bufferTimer -= Time.deltaTime;
+
+            if (!CanAcceptInput || stateMachine.CurrentState is PlayerDeadState)
                 return;
 
-            Vector2 delta = touchEnd - touchStart;
-            float distance = delta.magnitude;
-            if (distance < MinSwipeDistance) return;
-
-            float elapsed = Time.time - touchStartTime;
-            if (elapsed <= 0f) return;
-
-            float difficultyFactor =
-                Mathf.Lerp(1f, 0.65f, game.Difficulty.Progress);
-
-            if ((distance / elapsed) < MinSwipeSpeed * difficultyFactor)
-                return;
-
-            Vector2 dir = delta.normalized;
+            Vector2 dir = bufferedSwipe;
 
             var tutorial = game.TutorialService;
             if (tutorial != null && tutorial.IsActive && !tutorial.CanProcessSwipe(dir))
@@ -212,23 +235,7 @@ namespace DodoRun.Player
                 AudioManager.Instance.PlayEffect(SoundType.Slide);
                 stateMachine.ChangeState(PlayerState.ROLLING);
             }
-            game.StartCoroutine(InputCooldown());
-        }
-
-        private IEnumerator InputCooldown()
-        {
-            float cooldown =
-                Mathf.Lerp(0.1f, 0.04f, game.Difficulty.Progress);
-
-            yield return new WaitForSeconds(cooldown);
-
-            if (!IsSliding && stateMachine.CurrentState is not PlayerDeadState)
-                CanAcceptInput = true;
-        }
-
-        public PlayerState GetState()
-        {
-            return stateMachine.GetCurrentStateEnum();
+            bufferTimer = 0f;
         }
 
         private bool IsJumpAllowed()
@@ -249,13 +256,14 @@ namespace DodoRun.Player
                 if (!c.IsUsed()) continue;
 
                 Transform t = c.CoinView.transform;
+
                 float dz = t.position.z - transform.position.z;
                 if (dz < -1f || dz > range) continue;
 
                 float dx = Mathf.Abs(t.position.x - transform.position.x);
                 if (dx > 4f) continue;
 
-                t.position = Vector3.Lerp(t.position, target, Time.deltaTime * 12f);
+                t.position = Vector3.Lerp(t.position, target, Time.deltaTime * 14f);
 
                 if (Vector3.Distance(t.position, transform.position) < 0.55f)
                     c.Collect();
@@ -264,8 +272,13 @@ namespace DodoRun.Player
 
         public IEnumerator DoSubwayJump()
         {
-            isJumping = true;
             PlayerAnimator.SetTrigger("Jump");
+
+            float jumpDuration = Mathf.Lerp(
+                BASE_JUMP_DURATION,
+                FAST_JUMP_DURATION,
+                game.Difficulty.Progress
+            );
 
             Vector3 start = transform.position;
             float timer = 0f;
@@ -281,8 +294,11 @@ namespace DodoRun.Player
 
                 yield return null;
             }
+        }
 
-            isJumping = false;
+        public PlayerState GetState()
+        {
+            return stateMachine.GetCurrentStateEnum();
         }
     }
 }

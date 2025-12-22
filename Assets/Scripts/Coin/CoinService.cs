@@ -54,7 +54,8 @@ namespace DodoRun.Coin
             {
                 var coin = activeCoins[i];
                 coin.CoinView.transform.position += delta;
-                if (coin.CoinView.transform.position.z < player.position.z - 5f)
+
+                if (coin.CoinView.transform.position.z < player.position.z - 3f)
                     coin.Deactivate();
             }
         }
