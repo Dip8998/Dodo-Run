@@ -15,8 +15,6 @@ namespace DodoRun.Player
 
         public void OnStateEnter()
         {
-            Debug.Log("Player hit an obstacle! Transitioning to Death state.");
-
             Owner.CanAcceptInput = false;
 
             Owner.StopMovement();

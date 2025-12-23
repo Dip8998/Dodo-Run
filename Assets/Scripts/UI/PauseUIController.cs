@@ -53,7 +53,6 @@ namespace DodoRun.UI
             }
 
             Time.timeScale = 0f;
-            Debug.Log("Pause UI: Panel should now be visible.");
         }
 
         public void Resume()

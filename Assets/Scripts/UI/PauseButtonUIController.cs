@@ -40,7 +40,6 @@ namespace DodoRun.UI
         {
             if (GameService.Instance == null || !GameService.Instance.IsInitialized)
             {
-                Debug.LogWarning("Pause clicked but Game is not running yet (Loading Assets...)");
                 return;
             }
 
