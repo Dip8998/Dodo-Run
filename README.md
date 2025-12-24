@@ -1,4 +1,4 @@
-#Dodo Runner
+# Dodo Runner
 
 **Dodo Runner** is a mobile **endless runner game built in Unity**, developed with a strong focus on **clean architecture, scalable systems, and mobile performance**.
 
